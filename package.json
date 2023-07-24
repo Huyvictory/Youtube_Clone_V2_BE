@@ -23,8 +23,8 @@
     "rest"
   ],
   "scripts": {
-    "start": "npm run rm:public && cross-env NODE_ENV=production ts-node --files -r tsconfig-paths/register ./src",
-    "watch": "npm run rm:public && cross-env ts-node-dev --files --respawn --inspect -r tsconfig-paths/register ./src",
+    "start": "cross-env NODE_ENV=production ts-node --files -r tsconfig-paths/register ./src",
+    "watch": "cross-env ts-node-dev --files --respawn --inspect -r tsconfig-paths/register ./src",
     "build": "npm run rm:public && cross-env NODE_ENV=production tsc && tsc-alias && npm run copy:files",
     "rm:public": "rimraf ./public",
     "copy:files": "cp .env ./public/.env && cp -R ./src/templates ./public",

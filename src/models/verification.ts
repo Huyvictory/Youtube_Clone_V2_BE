@@ -4,15 +4,15 @@ import { IVerification } from '@/contracts/user'
 
 const schema = new Schema<IVerification>(
   {
-    user: {
+    user_id: {
       type: Schema.Types.ObjectId,
       ref: 'User'
     },
-    email: String,
-    accessToken: String,
-    expiresIn: Date
+    email: { type: String },
+    verification_token: { type: String },
+    verification_expiresIn: { type: Date }
   },
   { timestamps: true }
 )
 
-export const Verification = model<IVerification>('Verification', schema)
+export const VerificationSchema = model<IVerification>('Verification', schema)

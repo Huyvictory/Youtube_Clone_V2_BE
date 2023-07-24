@@ -264,7 +264,7 @@ export const authController = {
         })
       }
 
-      const user = await userService.getById(resetPassword.user)
+      const user = await userService.getById(resetPassword.user_id)
 
       if (!user) {
         return res.status(StatusCodes.NOT_FOUND).json({
@@ -277,7 +277,7 @@ export const authController = {
       const hashedPassword = await createHash(password)
 
       await userService.updatePasswordByUserId(
-        resetPassword.user,
+        resetPassword.user_id,
         hashedPassword,
         session
       )

@@ -5,16 +5,53 @@ import { IUser, IUserMethods, UserModel } from '@/contracts/user'
 
 const schema = new Schema<IUser, UserModel, IUserMethods>(
   {
-    email: String,
-    password: String,
-    firstName: String,
-    lastName: String,
+    email: {
+      type: String,
+      required: true
+    },
+    password: {
+      type: String,
+      required: true
+    },
+    firstName: {
+      type: String,
+      required: true
+    },
+    lastName: {
+      type: String,
+      required: true
+    },
+    userName: {
+      type: String,
+      required: true
+    },
+    Dob: {
+      type: Date,
+      default: undefined
+    },
+    channel_id: {
+      type: Schema.Types.ObjectId
+    },
+    subscribed_channels: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Channel' }],
+      default: []
+    },
+    user_media_id: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Media' }],
+      default: []
+    },
     verified: {
       type: Boolean,
       default: false
     },
-    verifications: [{ type: Schema.Types.ObjectId, ref: 'Verification' }],
-    resetPasswords: [{ type: Schema.Types.ObjectId, ref: 'ResetPassword' }]
+    verifications: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Verification' }],
+      default: []
+    },
+    resetPasswords: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'ResetPassword' }],
+      default: []
+    }
   },
   { timestamps: true }
 )
@@ -28,8 +65,9 @@ schema.methods.toJSON = function () {
 
   delete obj.password
   delete obj.verifications
+  delete obj.resetPasswords
 
   return obj
 }
 
-export const User = model<IUser, UserModel>('User', schema)
+export const UserSchema = model<IUser, UserModel>('User', schema)

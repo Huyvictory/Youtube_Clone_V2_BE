@@ -4,21 +4,26 @@ import { IMedia, MediaModel } from '@/contracts/media'
 
 const schema = new Schema<IMedia, MediaModel>(
   {
-    originalname: String,
-    encoding: String,
-    mimetype: String,
-    destination: String,
-    filename: String,
-    path: String,
-    size: Number,
-    orderColumn: {
-      type: Number,
-      default: 0
+    media_type: {
+      type: String,
+      enum: ['User', 'Video'],
+      required: true
     },
-    refType: String,
-    refId: { type: Schema.Types.ObjectId }
+    media_file_name: {
+      type: String,
+      required: true
+    },
+    media_url: {
+      type: String,
+      required: true
+    },
+    media_user_id: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: 'User'
+    }
   },
   { timestamps: true }
 )
 
-export const Media = model<IMedia, MediaModel>('Media', schema)
+export const MediaSchema = model<IMedia, MediaModel>('Media', schema)

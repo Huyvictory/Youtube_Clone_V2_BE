@@ -13,5 +13,6 @@ export enum ImageSizeInMb {
 }
 
 export enum MediaRefType {
-  User = 'User'
+  User = 'User',
+  Video = 'Video'
 }

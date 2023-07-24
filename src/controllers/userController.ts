@@ -165,14 +165,17 @@ export const userController = {
       session.startTransaction()
 
       await userService.updateVerificationAndEmailByUserId(
-        verification.user,
+        verification.user_id,
         verification.email,
         session
       )
 
-      await verificationService.deleteManyByUserId(verification.user, session)
+      await verificationService.deleteManyByUserId(
+        verification.user_id,
+        session
+      )
 
-      const { accessToken } = jwtSign(verification.user)
+      const { accessToken } = jwtSign(verification.user_id)
 
       const userMail = new UserMail()
 

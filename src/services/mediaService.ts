@@ -1,11 +1,11 @@
 import { ClientSession, ObjectId } from 'mongoose'
 
-import { Media } from '@/models'
+import { MediaSchema } from '@/models'
 import { CreateMediaPayload, UpdateMediaPayload } from '@/contracts/media'
 import { MediaRefType } from '@/constants'
 
 export const mediaService = {
-  getById: (mediaId: ObjectId) => Media.findById(mediaId),
+  getById: (mediaId: ObjectId) => MediaSchema.findById(mediaId),
 
   findOneByRef: ({
     refType,
@@ -13,7 +13,7 @@ export const mediaService = {
   }: {
     refType: MediaRefType
     refId: ObjectId
-  }) => Media.findOne({ refType, refId }),
+  }) => MediaSchema.findOne({ refType, refId }),
 
   findManyByRef: ({
     refType,
@@ -21,7 +21,7 @@ export const mediaService = {
   }: {
     refType: MediaRefType
     refId: ObjectId
-  }) => Media.find({ refType, refId }),
+  }) => MediaSchema.find({ refType, refId }),
 
   create: (
     {

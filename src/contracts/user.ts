@@ -2,23 +2,32 @@ import { Model, ObjectId } from 'mongoose'
 
 export interface IVerification {
   email: string
-  accessToken: string
-  expiresIn: Date
-  user: ObjectId
+  verification_token: string
+  verification_expiresIn: Date
+  user_id: ObjectId
 }
 
 export interface IResetPassword {
-  accessToken: string
-  expiresIn: Date
-  user: ObjectId
+  user_id: ObjectId
+  reset_password_token: string
+  reset_code: string
+  reset_code_attempts: number
+  is_disabled: boolean
+  is_correct_reset_code: boolean
+  resetpassword_expires_in: Date
 }
 
 export interface IUser {
   id: ObjectId
   email: string
   password: string
-  firstName?: string
-  lastName?: string
+  firstName: string
+  lastName: string
+  userName: string
+  Dob?: Date
+  channel_id: ObjectId
+  subscribed_channels: ObjectId[]
+  user_media_id: ObjectId[]
   verified: boolean
   verifications?: ObjectId[]
   resetPasswords?: ObjectId[]
