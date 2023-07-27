@@ -15,71 +15,71 @@ export class Image {
     this.image = image
   }
 
-  public async sharp({
-    width,
-    height
-  }: { width?: number; height?: number } = {}): Promise<string> {
-    const isResize = width || height
+  // public async sharp({
+  //   width,
+  //   height
+  // }: { width?: number; height?: number } = {}): Promise<string> {
+  //   const isResize = width || height
 
-    let fileName = this.image.filename
-    if (isResize) {
-      fileName = `${fileName}_${[width, height].join('x')}`
-    }
+  //   let fileName = this.image.filename
+  //   if (isResize) {
+  //     fileName = `${fileName}_${[width, height].join('x')}`
+  //   }
 
-    const conversionsPath = join(this.image.destination, 'conversions')
-    const filePath = join(
-      conversionsPath,
-      `${fileName}.${mime.getExtension(this.image.mimetype)}`
-    )
+  //   const conversionsPath = join(this.image.destination, 'conversions')
+  //   const filePath = join(
+  //     conversionsPath,
+  //     `${fileName}.${mime.getExtension(this.image.mimetype)}`
+  //   )
 
-    const fileFullPath = joinRelativeToMainPath(filePath)
+  //   const fileFullPath = joinRelativeToMainPath(filePath)
 
-    if (await this.isFileExist(fileFullPath)) {
-      return filePath
-    }
+  //   if (await this.isFileExist(fileFullPath)) {
+  //     return filePath
+  //   }
 
-    this.sharpInstance = sharp(joinRelativeToMainPath(this.image.path))
-    if (isResize) {
-      this.sharpInstance.resize(width, height)
-    }
+  //   this.sharpInstance = sharp(joinRelativeToMainPath(this.image.path))
+  //   if (isResize) {
+  //     this.sharpInstance.resize(width, height)
+  //   }
 
-    await this.createDirectoryIfNeeded(joinRelativeToMainPath(conversionsPath))
+  //   await this.createDirectoryIfNeeded(joinRelativeToMainPath(conversionsPath))
 
-    await this.saveFile(fileFullPath)
+  //   await this.saveFile(fileFullPath)
 
-    return filePath
-  }
+  //   return filePath
+  // }
 
-  public async deleteFile() {
-    try {
-      const fileFullPath = joinRelativeToMainPath(this.image.path)
+  // public async deleteFile() {
+  //   try {
+  //     const fileFullPath = joinRelativeToMainPath(this.image.path)
 
-      if (await this.isFileExist(fileFullPath)) {
-        await fs.unlink(fileFullPath)
-      }
+  //     if (await this.isFileExist(fileFullPath)) {
+  //       await fs.unlink(fileFullPath)
+  //     }
 
-      const conversionsPath = join(this.image.destination, 'conversions')
-      const conversionsFullPath = joinRelativeToMainPath(conversionsPath)
-      const files = await fs.readdir(conversionsFullPath)
+  //     const conversionsPath = join(this.image.destination, 'conversions')
+  //     const conversionsFullPath = joinRelativeToMainPath(conversionsPath)
+  //     const files = await fs.readdir(conversionsFullPath)
 
-      const promises = files
-        .filter(file => {
-          const fileFullPath = join(conversionsFullPath, file)
-          return (
-            new RegExp(this.image.filename).test(file) &&
-            this.isFileExist(fileFullPath)
-          )
-        })
-        .map(file => {
-          const fileFullPath = join(conversionsFullPath, file)
-          return fs.unlink(fileFullPath)
-        })
+  //     const promises = files
+  //       .filter(file => {
+  //         const fileFullPath = join(conversionsFullPath, file)
+  //         return (
+  //           new RegExp(this.image.filename).test(file) &&
+  //           this.isFileExist(fileFullPath)
+  //         )
+  //       })
+  //       .map(file => {
+  //         const fileFullPath = join(conversionsFullPath, file)
+  //         return fs.unlink(fileFullPath)
+  //       })
 
-      await Promise.all(promises)
-    } catch {
-      return null
-    }
-  }
+  //     await Promise.all(promises)
+  //   } catch {
+  //     return null
+  //   }
+  // }
 
   private async isFileExist(filePath: string) {
     try {

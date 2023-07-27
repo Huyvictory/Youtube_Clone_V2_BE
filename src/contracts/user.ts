@@ -21,9 +21,9 @@ export interface IUser {
   id: ObjectId
   email: string
   password: string
-  firstName: string
-  lastName: string
-  userName: string
+  firstname: string
+  lastname: string
+  username: string
   Dob?: Date
   channel_id: ObjectId
   subscribed_channels: ObjectId[]
@@ -42,7 +42,7 @@ export type UserModel = Model<IUser, unknown, IUserMethods>
 export type VerificationRequestPayload = Pick<IUser, 'email'>
 
 export type UpdateProfilePayload = Required<
-  Pick<IUser, 'firstName' | 'lastName'>
+  Pick<IUser, 'firstname' | 'lastname'>
 >
 
 export type UpdateEmailPayload = Pick<IUser, 'email' | 'password'>

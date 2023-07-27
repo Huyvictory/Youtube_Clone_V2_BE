@@ -1,47 +1,51 @@
 import { ClientSession, ObjectId } from 'mongoose'
 
-import { Verification } from '@/models'
-import { createDateNow } from '@/utils/dates'
+import { VerificationSchema } from '@/models'
 
 export const verificationService = {
-  create: (
+  createVerification: (
     {
       userId,
       email,
-      accessToken,
+      verification_token,
       expiresIn
     }: {
       userId: ObjectId
       email: string
-      accessToken: string
+      verification_token: string
       expiresIn: Date
     },
     session?: ClientSession
   ) =>
-    new Verification({
-      user: userId,
+    new VerificationSchema({
+      user_id: userId,
       email,
-      accessToken,
-      expiresIn
+      verification_token,
+      verification_expiresIn: expiresIn
     }).save({ session }),
 
   findOneAndUpdateByUserIdAndEmail: (
     {
       userId,
       email,
-      accessToken,
+      verification_token,
       expiresIn
     }: {
       userId: ObjectId
       email: string
-      accessToken: string
+      verification_token: string
       expiresIn: Date
     },
     session?: ClientSession
   ) => {
     const data = [
       { user: userId, email },
-      { user: userId, email, accessToken, expiresIn }
+      {
+        user: userId,
+        email,
+        verification_token,
+        verification_expiresIn: expiresIn
+      }
     ]
 
     let params = null
@@ -52,15 +56,14 @@ export const verificationService = {
       params = data
     }
 
-    return Verification.findOneAndUpdate(...params)
+    return VerificationSchema.findOneAndUpdate(...params)
   },
 
-  getByValidAccessToken: (accessToken: string) =>
-    Verification.findOne({
-      accessToken,
-      expiresIn: { $gte: createDateNow() }
+  getByValidVerifyToken: (verificationToken: string) =>
+    VerificationSchema.findOne({
+      verification_token: verificationToken
     }),
 
   deleteManyByUserId: (userId: ObjectId, session?: ClientSession) =>
-    Verification.deleteMany({ user: userId }, { session })
+    VerificationSchema.deleteMany({ user: userId }, { session })
 }

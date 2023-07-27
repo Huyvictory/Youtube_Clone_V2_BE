@@ -13,15 +13,15 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
       type: String,
       required: true
     },
-    firstName: {
+    firstname: {
       type: String,
       required: true
     },
-    lastName: {
+    lastname: {
       type: String,
       required: true
     },
-    userName: {
+    username: {
       type: String,
       required: true
     },

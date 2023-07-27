@@ -8,15 +8,6 @@ export const users = (router: Router): void => {
   router.get('/me', authGuard.isAuth, userController.me)
 
   router.post(
-    '/user/verification/request',
-    authGuard.isAuth,
-    userValidation.verificationRequest,
-    userController.verificationRequest
-  )
-
-  router.get('/user/verification/:accessToken', userController.verification)
-
-  router.post(
     '/user/update',
     authGuard.isAuth,
     userValidation.updateProfile,
@@ -37,12 +28,12 @@ export const users = (router: Router): void => {
     userController.updatePassword
   )
 
-  router.post(
-    '/user/update/avatar',
-    authGuard.isAuth,
-    userValidation.updateAvatar,
-    userController.updateAvatar
-  )
+  // router.post(
+  //   '/user/update/avatar',
+  //   authGuard.isAuth,
+  //   userValidation.updateAvatar,
+  //   userController.updateAvatar
+  // )
 
   router.post(
     '/user/delete',

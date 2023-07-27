@@ -1,32 +1,37 @@
 import { ClientSession, ObjectId } from 'mongoose'
 
-import { User } from '@/models'
+import { UserSchema } from '@/models'
 
 export const userService = {
   create: (
     {
       email,
       password,
-      verified = false
+      firstname,
+      lastname
     }: {
       email: string
       password: string
-      verified?: boolean
+      firstname: string
+      lastname: string
     },
     session?: ClientSession
   ) => {
-    return new User({
+    const username = `${firstname}${lastname}`.toLowerCase()
+    return new UserSchema({
       email,
       password,
-      verified
+      firstname,
+      lastname,
+      username
     }).save({ session })
   },
 
-  getById: (userId: ObjectId) => User.findById(userId),
+  getById: (userId: ObjectId) => UserSchema.findById(userId),
 
-  getByEmail: (email: string) => User.findOne({ email }),
+  getByEmail: (email: string) => UserSchema.findOne({ email }),
 
-  isExistByEmail: (email: string) => User.exists({ email }),
+  isExistByEmail: (email: string) => UserSchema.exists({ email }),
 
   updatePasswordByUserId: (
     userId: ObjectId,
@@ -43,7 +48,7 @@ export const userService = {
       params = data
     }
 
-    return User.updateOne(...params)
+    return UserSchema.updateOne(...params)
   },
 
   updateVerificationAndEmailByUserId: (
@@ -61,15 +66,15 @@ export const userService = {
       params = data
     }
 
-    return User.updateOne(...params)
+    return UserSchema.updateOne(...params)
   },
 
   updateProfileByUserId: (
     userId: ObjectId,
-    { firstName, lastName }: { firstName: string; lastName: string },
+    { firstname, lastname }: { firstname: string; lastname: string },
     session?: ClientSession
   ) => {
-    const data = [{ _id: userId }, { firstName, lastName }]
+    const data = [{ _id: userId }, { firstname, lastname }]
 
     let params = null
 
@@ -79,7 +84,7 @@ export const userService = {
       params = data
     }
 
-    return User.updateOne(...params)
+    return UserSchema.updateOne(...params)
   },
 
   updateEmailByUserId: (
@@ -97,11 +102,11 @@ export const userService = {
       params = data
     }
 
-    return User.updateOne(...params)
+    return UserSchema.updateOne(...params)
   },
 
   deleteById: (userId: ObjectId, session?: ClientSession) =>
-    User.deleteOne({ user: userId }, { session }),
+    UserSchema.deleteOne({ user: userId }, { session }),
 
   addResetPasswordToUser: async (
     {
@@ -119,7 +124,7 @@ export const userService = {
       options = { session }
     }
 
-    const user = await User.findOne({ _id: userId }, null, options)
+    const user = await UserSchema.findOne({ _id: userId }, null, options)
 
     if (user) {
       if (!user.resetPasswords) {
@@ -130,13 +135,15 @@ export const userService = {
     }
   },
 
-  addVerificationToUser: async (
+  addChannel_VerificationToUser: async (
     {
       userId,
-      verificationId
+      verificationId,
+      channelId
     }: {
       userId: ObjectId
       verificationId: ObjectId
+      channelId?: ObjectId
     },
     session?: ClientSession
   ) => {
@@ -146,13 +153,16 @@ export const userService = {
       options = { session }
     }
 
-    const user = await User.findOne({ _id: userId }, null, options)
+    const user = await UserSchema.findOne({ _id: userId }, null, options)
 
     if (user) {
       if (!user.verifications) {
         user.verifications = []
       }
       user.verifications.push(verificationId)
+      if (channelId) {
+        user.channel_id = channelId
+      }
       await user.save({ session })
     }
   }

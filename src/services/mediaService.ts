@@ -1,7 +1,7 @@
 import { ClientSession, ObjectId } from 'mongoose'
 
 import { MediaSchema } from '@/models'
-import { CreateMediaPayload, UpdateMediaPayload } from '@/contracts/media'
+import { CreateMediaPayload } from '@/contracts/media'
 import { MediaRefType } from '@/constants'
 
 export const mediaService = {
@@ -23,57 +23,57 @@ export const mediaService = {
     refId: ObjectId
   }) => MediaSchema.find({ refType, refId }),
 
-  create: (
-    {
-      originalname,
-      encoding,
-      mimetype,
-      destination,
-      filename,
-      path,
-      size
-    }: CreateMediaPayload,
-    session?: ClientSession
-  ) =>
-    new Media({
-      originalname,
-      encoding,
-      mimetype,
-      destination,
-      filename,
-      path,
-      size
-    }).save({ session }),
+  // create: (
+  //   {
+  //     originalname,
+  //     encoding,
+  //     mimetype,
+  //     destination,
+  //     filename,
+  //     path,
+  //     size
+  //   }: CreateMediaPayload,
+  //   session?: ClientSession
+  // ) =>
+  //   new MediaSchema({
+  //     originalname,
+  //     encoding,
+  //     mimetype,
+  //     destination,
+  //     filename,
+  //     path,
+  //     size
+  //   }).save({ session }),
 
-  updateById: (
-    mediaId: ObjectId,
-    { refType, refId }: UpdateMediaPayload,
-    session?: ClientSession
-  ) => {
-    const data = [{ _id: mediaId }, { refType, refId }]
+  // updateById: (
+  //   mediaId: ObjectId,
+  //   { refType, refId }: UpdateMediaPayload,
+  //   session?: ClientSession
+  // ) => {
+  //   const data = [{ _id: mediaId }, { refType, refId }]
 
-    let params = null
+  //   let params = null
 
-    if (session) {
-      params = [...data, { session }]
-    } else {
-      params = data
-    }
+  //   if (session) {
+  //     params = [...data, { session }]
+  //   } else {
+  //     params = data
+  //   }
 
-    return Media.updateOne(...params)
-  },
+  //   return Media.updateOne(...params)
+  // },
 
-  deleteById: (mediaId: ObjectId, session?: ClientSession) =>
-    Media.deleteOne({ _id: mediaId }, { session }),
+  // deleteById: (mediaId: ObjectId, session?: ClientSession) =>
+  //   Media.deleteOne({ _id: mediaId }, { session }),
 
-  deleteManyByRef: (
-    {
-      refType,
-      refId
-    }: {
-      refType: MediaRefType
-      refId: ObjectId
-    },
-    session?: ClientSession
-  ) => Media.deleteMany({ refType, refId }, { session })
+  // deleteManyByRef: (
+  //   {
+  //     refType,
+  //     refId
+  //   }: {
+  //     refType: MediaRefType
+  //     refId: ObjectId
+  //   },
+  //   session?: ClientSession
+  // ) => Media.deleteMany({ refType, refId }, { session })
 }

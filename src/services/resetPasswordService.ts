@@ -1,6 +1,6 @@
 import { ClientSession, ObjectId } from 'mongoose'
 
-import { ResetPassword } from '@/models'
+import { ResetPasswordSchema } from '@/models'
 import { createDateNow } from '@/utils/dates'
 
 export const resetPasswordService = {
@@ -16,18 +16,18 @@ export const resetPasswordService = {
     },
     session?: ClientSession
   ) =>
-    new ResetPassword({
+    new ResetPasswordSchema({
       user: userId,
       accessToken,
       expiresIn
     }).save({ session }),
 
   getByValidAccessToken: (accessToken: string) =>
-    ResetPassword.findOne({
+    ResetPasswordSchema.findOne({
       accessToken,
       expiresIn: { $gte: createDateNow() }
     }),
 
   deleteManyByUserId: (userId: ObjectId, session?: ClientSession) =>
-    ResetPassword.deleteMany({ user: userId }, { session })
+    ResetPasswordSchema.deleteMany({ user: userId }, { session })
 }

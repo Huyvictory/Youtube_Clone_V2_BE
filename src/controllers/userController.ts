@@ -1,20 +1,18 @@
 import { Response } from 'express'
-import { ObjectId, startSession } from 'mongoose'
+import { startSession } from 'mongoose'
 import { StatusCodes, ReasonPhrases } from 'http-status-codes'
 import winston from 'winston'
 
 import {
   ICombinedRequest,
   IContextRequest,
-  IParamsRequest,
   IUserRequest
 } from '@/contracts/request'
 import {
   DeleteProfilePayload,
   UpdateEmailPayload,
   UpdatePasswordPayload,
-  UpdateProfilePayload,
-  VerificationRequestPayload
+  UpdateProfilePayload
 } from '@/contracts/user'
 import {
   mediaService,
@@ -22,14 +20,11 @@ import {
   userService,
   verificationService
 } from '@/services'
-import { ExpiresInDays, MediaRefType } from '@/constants'
-import { createDateAddDaysFromNow } from '@/utils/dates'
+import { ExpiresInMinutes, MediaRefType } from '@/constants'
+import { addMinutesFromNow } from '@/utils/dates'
 import { createCryptoString } from '@/utils/cryptoString'
 import { UserMail } from '@/mailer'
-import { jwtSign } from '@/utils/jwt'
 import { createHash } from '@/utils/hash'
-import { Image } from '@/infrastructure/image'
-import { appUrl } from '@/utils/paths'
 
 export const userController = {
   me: async (
@@ -49,9 +44,9 @@ export const userController = {
     })
 
     let image
-    if (media) {
-      image = appUrl(await new Image(media).sharp({ width: 150, height: 150 }))
-    }
+    // if (media) {
+    //   image = appUrl(await new Image(media).sharp({ width: 150, height: 150 }))
+    // }
 
     return res.status(StatusCodes.OK).json({
       data: { ...user.toJSON(), image },
@@ -60,161 +55,15 @@ export const userController = {
     })
   },
 
-  verificationRequest: async (
-    {
-      context: { user },
-      body: { email }
-    }: ICombinedRequest<IUserRequest, VerificationRequestPayload>,
-    res: Response
-  ) => {
-    const session = await startSession()
-
-    try {
-      if (user.email !== email) {
-        const user = await userService.getByEmail(email)
-        if (user) {
-          return res.status(StatusCodes.CONFLICT).json({
-            message: ReasonPhrases.CONFLICT,
-            status: StatusCodes.CONFLICT
-          })
-        }
-      }
-
-      session.startTransaction()
-      const cryptoString = createCryptoString()
-
-      const dateFromNow = createDateAddDaysFromNow(ExpiresInDays.Verification)
-
-      let verification =
-        await verificationService.findOneAndUpdateByUserIdAndEmail(
-          {
-            userId: user.id,
-            email,
-            accessToken: cryptoString,
-            expiresIn: dateFromNow
-          },
-          session
-        )
-
-      if (!verification) {
-        verification = await verificationService.create(
-          {
-            userId: user.id,
-            email,
-            accessToken: cryptoString,
-            expiresIn: dateFromNow
-          },
-          session
-        )
-
-        await userService.addVerificationToUser(
-          {
-            userId: user.id,
-            verificationId: verification.id
-          },
-          session
-        )
-      }
-
-      const userMail = new UserMail()
-
-      userMail.verification({
-        email: user.email,
-        accessToken: cryptoString
-      })
-
-      await session.commitTransaction()
-      session.endSession()
-
-      return res.status(StatusCodes.OK).json({
-        message: ReasonPhrases.OK,
-        status: StatusCodes.OK
-      })
-    } catch (error) {
-      winston.error(error)
-
-      if (session.inTransaction()) {
-        await session.abortTransaction()
-        session.endSession()
-      }
-
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
-        status: StatusCodes.BAD_REQUEST
-      })
-    }
-  },
-
-  verification: async (
-    { params }: IParamsRequest<{ accessToken: string }>,
-    res: Response
-  ) => {
-    const session = await startSession()
-    try {
-      const verification = await verificationService.getByValidAccessToken(
-        params.accessToken
-      )
-
-      if (!verification) {
-        return res.status(StatusCodes.FORBIDDEN).json({
-          message: 'Error in verifying your account please try again !',
-          status: StatusCodes.FORBIDDEN
-        })
-      }
-
-      session.startTransaction()
-
-      await userService.updateVerificationAndEmailByUserId(
-        verification.user_id,
-        verification.email,
-        session
-      )
-
-      await verificationService.deleteManyByUserId(
-        verification.user_id,
-        session
-      )
-
-      const { accessToken } = jwtSign(verification.user_id)
-
-      const userMail = new UserMail()
-
-      userMail.successfullyVerified({
-        email: verification.email
-      })
-
-      await session.commitTransaction()
-      session.endSession()
-
-      return res.status(StatusCodes.OK).json({
-        data: { accessToken },
-        message: ReasonPhrases.OK,
-        status: StatusCodes.OK
-      })
-    } catch (error) {
-      winston.error(error)
-
-      if (session.inTransaction()) {
-        await session.abortTransaction()
-        session.endSession()
-      }
-
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
-        status: StatusCodes.BAD_REQUEST
-      })
-    }
-  },
-
   updateProfile: async (
     {
       context: { user },
-      body: { firstName, lastName }
+      body: { firstname, lastname }
     }: ICombinedRequest<IUserRequest, UpdateProfilePayload>,
     res: Response
   ) => {
     try {
-      await userService.updateProfileByUserId(user.id, { firstName, lastName })
+      await userService.updateProfileByUserId(user.id, { firstname, lastname })
 
       const userMail = new UserMail()
 
@@ -223,7 +72,7 @@ export const userController = {
       })
 
       return res.status(StatusCodes.OK).json({
-        data: { firstName, lastName },
+        data: { firstname, lastname },
         message: ReasonPhrases.OK,
         status: StatusCodes.OK
       })
@@ -280,32 +129,32 @@ export const userController = {
 
       const cryptoString = createCryptoString()
 
-      const dateFromNow = createDateAddDaysFromNow(ExpiresInDays.Verification)
+      const dateFromNow = addMinutesFromNow(ExpiresInMinutes.Verification)
 
       let verification =
         await verificationService.findOneAndUpdateByUserIdAndEmail(
           {
             userId: user.id,
             email,
-            accessToken: cryptoString,
+            verification_token: cryptoString,
             expiresIn: dateFromNow
           },
           session
         )
 
       if (!verification) {
-        verification = await verificationService.create(
+        verification = await verificationService.createVerification(
           {
             userId: user.id,
             email,
-            accessToken: cryptoString,
+            verification_token: cryptoString,
             expiresIn: dateFromNow
           },
           session
         )
       }
 
-      await userService.addVerificationToUser(
+      await userService.addChannel_VerificationToUser(
         {
           userId: user.id,
           verificationId: verification.id
@@ -388,34 +237,34 @@ export const userController = {
     }
   },
 
-  updateAvatar: async (
-    {
-      context: { user },
-      body: { imageId }
-    }: ICombinedRequest<IUserRequest, { imageId: ObjectId }>,
-    res: Response
-  ) => {
-    try {
-      await userController.deleteUserImages({ userId: user.id })
+  // updateAvatar: async (
+  //   {
+  //     context: { user },
+  //     body: { imageId }
+  //   }: ICombinedRequest<IUserRequest, { imageId: ObjectId }>,
+  //   res: Response
+  // ) => {
+  //   try {
+  //     await userController.deleteUserImages({ userId: user.id })
 
-      await mediaService.updateById(imageId, {
-        refType: MediaRefType.User,
-        refId: user.id
-      })
+  //     await mediaService.updateById(imageId, {
+  //       refType: MediaRefType.User,
+  //       refId: user.id
+  //     })
 
-      return res.status(StatusCodes.OK).json({
-        message: ReasonPhrases.OK,
-        status: StatusCodes.OK
-      })
-    } catch (error) {
-      winston.error(error)
+  //     return res.status(StatusCodes.OK).json({
+  //       message: ReasonPhrases.OK,
+  //       status: StatusCodes.OK
+  //     })
+  //   } catch (error) {
+  //     winston.error(error)
 
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
-        status: StatusCodes.BAD_REQUEST
-      })
-    }
-  },
+  //     return res.status(StatusCodes.BAD_REQUEST).json({
+  //       message: ReasonPhrases.BAD_REQUEST,
+  //       status: StatusCodes.BAD_REQUEST
+  //     })
+  //   }
+  // },
 
   deleteProfile: async (
     {
@@ -470,25 +319,25 @@ export const userController = {
         status: StatusCodes.BAD_REQUEST
       })
     }
-  },
-
-  deleteUserImages: async ({ userId }: { userId: ObjectId }) => {
-    const images = await mediaService.findManyByRef({
-      refType: MediaRefType.User,
-      refId: userId
-    })
-
-    const promises = []
-
-    for (let i = 0; i < images.length; i++) {
-      promises.push(new Image(images[i]).deleteFile())
-    }
-
-    await Promise.all(promises)
-
-    await mediaService.deleteManyByRef({
-      refType: MediaRefType.User,
-      refId: userId
-    })
   }
+
+  // deleteUserImages: async ({ userId }: { userId: ObjectId }) => {
+  //   const images = await mediaService.findManyByRef({
+  //     refType: MediaRefType.User,
+  //     refId: userId
+  //   })
+
+  //   const promises = []
+
+  //   for (let i = 0; i < images.length; i++) {
+  //     promises.push(new Image(images[i]).deleteFile())
+  //   }
+
+  //   await Promise.all(promises)
+
+  //   await mediaService.deleteManyByRef({
+  //     refType: MediaRefType.User,
+  //     refId: userId
+  //   })
+  // }
 }

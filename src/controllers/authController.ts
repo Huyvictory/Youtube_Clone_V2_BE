@@ -3,7 +3,7 @@ import { startSession } from 'mongoose'
 import { StatusCodes, ReasonPhrases } from 'http-status-codes'
 import winston from 'winston'
 
-import { ExpiresInDays } from '@/constants'
+import { ExpiresInMinutes } from '@/constants'
 import {
   NewPasswordPayload,
   ResetPasswordPayload,
@@ -20,13 +20,17 @@ import {
   IBodyRequest,
   ICombinedRequest,
   IContextRequest,
+  IParamsRequest,
   IUserRequest
 } from '@/contracts/request'
 import { createCryptoString } from '@/utils/cryptoString'
-import { createDateAddDaysFromNow } from '@/utils/dates'
+import { addMinutesFromNow } from '@/utils/dates'
 import { UserMail } from '@/mailer'
 import { createHash } from '@/utils/hash'
 import { redis } from '@/dataSources'
+import { channelService } from '@/services/channelService'
+import { VerificationRequestPayload } from '@/contracts/user'
+import { isVerifyTokenExpired } from '@/utils/verification'
 
 export const authController = {
   signIn: async (
@@ -39,18 +43,20 @@ export const authController = {
       const comparePassword = user?.comparePassword(password)
 
       if (!user || !comparePassword) {
-        return res.status(StatusCodes.NOT_FOUND).json({
-          message: ReasonPhrases.NOT_FOUND,
-          status: StatusCodes.NOT_FOUND
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Email or password is incorrect',
+          status: StatusCodes.BAD_REQUEST
         })
       }
 
-      // if (!user.verified) {
-      //   return res.status(StatusCodes.BAD_REQUEST).json({
-      //     message: 'You need to authenticated to continue using our platform',
-      //     status: StatusCodes.BAD_REQUEST
-      //   })
-      // }
+      if (!user.verified) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+          message:
+            'You need to verified your email to continue using our platform',
+          isVerfied: false,
+          status: StatusCodes.UNAUTHORIZED
+        })
+      }
 
       const { accessToken } = jwtSign(user.id)
 
@@ -70,7 +76,9 @@ export const authController = {
   },
 
   signUp: async (
-    { body: { email, password } }: IBodyRequest<SignUpPayload>,
+    {
+      body: { email, password, firstname, lastname }
+    }: IBodyRequest<SignUpPayload>,
     res: Response
   ) => {
     const session = await startSession()
@@ -79,7 +87,7 @@ export const authController = {
 
       if (isUserExist) {
         return res.status(StatusCodes.CONFLICT).json({
-          message: ReasonPhrases.CONFLICT,
+          message: 'Email is already registered !',
           status: StatusCodes.CONFLICT
         })
       }
@@ -90,40 +98,47 @@ export const authController = {
       const user = await userService.create(
         {
           email,
-          password: hashedPassword
+          password: hashedPassword,
+          firstname,
+          lastname
+        },
+        session
+      )
+
+      const user_channel = await channelService.createChannel(
+        {
+          channel_name: user.username,
+          channel_owner_id: user.id
         },
         session
       )
 
       const cryptoString = createCryptoString()
 
-      const dateFromNow = createDateAddDaysFromNow(ExpiresInDays.Verification)
+      const verificationTokenExpireTime = addMinutesFromNow(
+        ExpiresInMinutes.Verification
+      )
 
-      const verification = await verificationService.create(
+      const verification = await verificationService.createVerification(
         {
           userId: user.id,
           email,
-          accessToken: cryptoString,
-          expiresIn: dateFromNow
+          verification_token: cryptoString,
+          expiresIn: verificationTokenExpireTime
         },
         session
       )
 
-      await userService.addVerificationToUser(
+      await userService.addChannel_VerificationToUser(
         {
           userId: user.id,
-          verificationId: verification.id
+          verificationId: verification.id,
+          channelId: user_channel[0].id
         },
         session
       )
 
-      const { accessToken } = jwtSign(user.id)
-
       const userMail = new UserMail()
-
-      userMail.signUp({
-        email: user.email
-      })
 
       userMail.verification({
         email: user.email,
@@ -134,8 +149,7 @@ export const authController = {
       session.endSession()
 
       return res.status(StatusCodes.OK).json({
-        data: { accessToken },
-        message: ReasonPhrases.OK,
+        message: 'Registered account successfully',
         status: StatusCodes.OK
       })
     } catch (error) {
@@ -148,7 +162,7 @@ export const authController = {
       }
 
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
+        message: error,
         status: StatusCodes.BAD_REQUEST
       })
     }
@@ -197,7 +211,7 @@ export const authController = {
 
       const cryptoString = createCryptoString()
 
-      const dateFromNow = createDateAddDaysFromNow(ExpiresInDays.ResetPassword)
+      const dateFromNow = addMinutesFromNow(ExpiresInMinutes.Verification)
 
       const resetPassword = await resetPasswordService.create(
         {
@@ -311,6 +325,151 @@ export const authController = {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: ReasonPhrases.BAD_REQUEST,
         status: StatusCodes.BAD_REQUEST
+      })
+    }
+  },
+  verificationRequest: async (
+    { body: { email } }: IBodyRequest<VerificationRequestPayload>,
+    res: Response
+  ) => {
+    const session = await startSession()
+
+    try {
+      const user = await userService.getByEmail(email)
+
+      if (!user) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          message: 'User not found',
+          status: StatusCodes.NOT_FOUND
+        })
+      }
+
+      if (user.verified) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Email is already verified',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      session.startTransaction()
+      const cryptoString = createCryptoString()
+
+      const verificationTokenExpireTime = addMinutesFromNow(
+        ExpiresInMinutes.Verification
+      )
+
+      const verification = await verificationService.createVerification(
+        {
+          userId: user.id,
+          email,
+          verification_token: cryptoString,
+          expiresIn: verificationTokenExpireTime
+        },
+        session
+      )
+
+      await userService.addChannel_VerificationToUser(
+        {
+          userId: user.id,
+          verificationId: verification.id
+        },
+        session
+      )
+
+      const userMail = new UserMail()
+
+      userMail.verification({
+        email: user.email,
+        accessToken: cryptoString
+      })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Request email verification sent',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      if (session.inTransaction()) {
+        await session.abortTransaction()
+        session.endSession()
+      }
+
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: error,
+        status: StatusCodes.BAD_REQUEST
+      })
+    }
+  },
+
+  verification: async (
+    { params }: IParamsRequest<{ verifyToken: string }>,
+    res: Response
+  ) => {
+    const session = await startSession()
+    try {
+      const verification = await verificationService.getByValidVerifyToken(
+        params.verifyToken
+      )
+
+      if (!verification) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+          message: 'Error in verifying your email please try again !',
+          status: StatusCodes.FORBIDDEN
+        })
+      }
+
+      if (isVerifyTokenExpired(verification.verification_expiresIn)) {
+        return res.status(StatusCodes.FORBIDDEN).json({
+          message:
+            'Verify token is expired. Please send a new verification request',
+          isVerifyTokenExpired: true,
+          status: StatusCodes.FORBIDDEN
+        })
+      }
+      session.startTransaction()
+
+      await userService.updateVerificationAndEmailByUserId(
+        verification.user_id,
+        verification.email,
+        session
+      )
+
+      await verificationService.deleteManyByUserId(
+        verification.user_id,
+        session
+      )
+
+      const { accessToken } = jwtSign(verification.user_id)
+
+      const userMail = new UserMail()
+
+      userMail.successfullyVerified({
+        email: verification.email
+      })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      return res.status(StatusCodes.OK).json({
+        data: { accessToken },
+        message: 'Verify email successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      if (session.inTransaction()) {
+        await session.abortTransaction()
+        session.endSession()
+      }
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: error,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
       })
     }
   }

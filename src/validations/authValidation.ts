@@ -10,6 +10,7 @@ import {
   NewPasswordPayload
 } from '@/contracts/auth'
 import { IBodyRequest } from '@/contracts/request'
+import { isValidPassword } from '@/utils/password'
 
 export const authValidation = {
   signIn: (
@@ -63,10 +64,18 @@ export const authValidation = {
       if (
         !req.body.email ||
         !req.body.password ||
-        !validator.isLength(req.body.password, { min: 6, max: 48 })
+        !req.body.firstname ||
+        !req.body.lastname
       ) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
+          message: 'Missing fields to register',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      if (!isValidPassword(req.body.password)) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Invalid password !',
           status: StatusCodes.BAD_REQUEST
         })
       }
@@ -82,12 +91,17 @@ export const authValidation = {
         !validator.isEmail(normalizedEmail, { allow_utf8_local_part: false })
       ) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
+          message: 'Email is invalid',
           status: StatusCodes.BAD_REQUEST
         })
       }
 
-      Object.assign(req.body, { email: normalizedEmail })
+      Object.assign(req.body, {
+        email: normalizedEmail,
+        password: req.body.password,
+        firstname: req.body.firstname,
+        lastname: req.body.lastname
+      })
 
       return next()
     } catch (error) {

@@ -5,19 +5,9 @@ import { authGuard } from '@/guards'
 import { authValidation } from '@/validations'
 
 export const auth = (router: Router): void => {
-  router.post(
-    '/auth/sign-in',
-    authGuard.isGuest,
-    authValidation.signIn,
-    authController.signIn
-  )
+  router.post('/auth/sign-in', authValidation.signIn, authController.signIn)
 
-  router.post(
-    '/auth/sign-up',
-    authGuard.isGuest,
-    authValidation.signUp,
-    authController.signUp
-  )
+  router.post('/auth/sign-up', authValidation.signUp, authController.signUp)
 
   router.get('/auth/sign-out', authGuard.isAuth, authController.signOut)
 
@@ -33,4 +23,7 @@ export const auth = (router: Router): void => {
     authValidation.newPassword,
     authController.newPassword
   )
+
+  router.post('/auth/verification/request', authController.verificationRequest)
+  router.post('/auth/verification/:verifyToken', authController.verification)
 }

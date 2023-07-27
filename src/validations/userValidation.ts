@@ -62,15 +62,15 @@ export const userValidation = {
     next: NextFunction
   ) => {
     try {
-      if (!req.body.firstName || !req.body.lastName) {
+      if (!req.body.firstname || !req.body.lastname) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           message: ReasonPhrases.BAD_REQUEST,
           status: StatusCodes.BAD_REQUEST
         })
       }
 
-      const trimemdFirstName = validator.trim(req.body.firstName)
-      const trimemdLastName = validator.trim(req.body.lastName)
+      const trimemdFirstName = validator.trim(req.body.firstname)
+      const trimemdLastName = validator.trim(req.body.lastname)
 
       if (
         !validator.isLength(trimemdFirstName, { min: 2, max: 48 }) ||

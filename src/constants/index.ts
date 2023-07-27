@@ -1,5 +1,5 @@
-export enum ExpiresInDays {
-  Verification = 7,
+export enum ExpiresInMinutes {
+  Verification = 1,
   ResetPassword = 7
 }
 

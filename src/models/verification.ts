@@ -6,7 +6,8 @@ const schema = new Schema<IVerification>(
   {
     user_id: {
       type: Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      required: true
     },
     email: { type: String },
     verification_token: { type: String },

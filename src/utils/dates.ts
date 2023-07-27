@@ -1,13 +1,9 @@
-export const createDateAddDaysFromNow = (days: number) => {
-  const date = new Date()
+import dayjs from 'dayjs'
 
-  date.setDate(date.getDate() + days)
-
-  return date
+export const addMinutesFromNow = (minutes: number) => {
+  return dayjs().add(minutes, 'minutes').toDate()
 }
 
 export const createDateNow = () => {
-  const date = new Date()
-
-  return date
+  return dayjs().toDate()
 }
