@@ -1,11 +1,12 @@
 import { Response } from 'express'
-import { startSession } from 'mongoose'
+import { ObjectId, startSession } from 'mongoose'
 import { StatusCodes, ReasonPhrases } from 'http-status-codes'
 import winston from 'winston'
 
 import { ExpiresInMinutes } from '@/constants'
 import {
-  NewPasswordPayload,
+  ResetNewPasswordPayload,
+  ResetPasswordCodePayload,
   ResetPasswordPayload,
   SignInPayload,
   SignUpPayload
@@ -31,6 +32,9 @@ import { redis } from '@/dataSources'
 import { channelService } from '@/services/channelService'
 import { VerificationRequestPayload } from '@/contracts/user'
 import { isVerifyTokenExpired } from '@/utils/verification'
+
+import randomize from 'randomatic'
+import { isRequestPasswordAttemptExpired } from '@/utils/password'
 
 export const authController = {
   signIn: async (
@@ -184,25 +188,23 @@ export const authController = {
       })
     } catch (error) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
+        message: error,
         status: StatusCodes.BAD_REQUEST
       })
     }
   },
 
-  resetPassword: async (
+  resetPassswordRequest: async (
     { body: { email } }: IBodyRequest<ResetPasswordPayload>,
     res: Response
   ) => {
     const session = await startSession()
-
     try {
       const user = await userService.getByEmail(email)
 
       if (!user) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message:
-            'Your email was not found in our system, please try with a different one',
+          message: 'Email not found',
           status: StatusCodes.BAD_REQUEST
         })
       }
@@ -211,21 +213,27 @@ export const authController = {
 
       const cryptoString = createCryptoString()
 
-      const dateFromNow = addMinutesFromNow(ExpiresInMinutes.Verification)
-
-      const resetPassword = await resetPasswordService.create(
-        {
-          userId: user.id,
-          accessToken: cryptoString,
-          expiresIn: dateFromNow
-        },
-        session
+      const expireTimeResetPassword = addMinutesFromNow(
+        ExpiresInMinutes.ResetPassword
       )
 
-      await userService.addResetPasswordToUser(
+      const resetPasswordCode = randomize('0A', 6)
+
+      const newResetPasswordRequest =
+        await resetPasswordService.createResetPasswordRequest(
+          {
+            userId: user.id,
+            resetPasswordToken: cryptoString,
+            resetCode: resetPasswordCode,
+            expiresIn: expireTimeResetPassword
+          },
+          session
+        )
+
+      await userService.addResetPasswordRequestToUser(
         {
           userId: user.id,
-          resetPasswordId: resetPassword.id
+          resetPasswordId: newResetPasswordRequest.id
         },
         session
       )
@@ -234,14 +242,16 @@ export const authController = {
 
       userMail.resetPassword({
         email: user.email,
-        accessToken: cryptoString
+        resetPasswordCode: resetPasswordCode
       })
 
       await session.commitTransaction()
       session.endSession()
 
       return res.status(StatusCodes.OK).json({
-        message: ReasonPhrases.OK,
+        message:
+          'Reset password code has been sent to your email ! Please check on it',
+        id: newResetPasswordRequest.reset_password_token,
         status: StatusCodes.OK
       })
     } catch (error) {
@@ -252,53 +262,132 @@ export const authController = {
         session.endSession()
       }
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
+        message: error,
         status: StatusCodes.BAD_REQUEST
       })
     }
   },
 
-  newPassword: async (
+  validateResetPasswordCode: async (
     {
-      body: { password },
-      params
-    }: ICombinedRequest<null, NewPasswordPayload, { accessToken: string }>,
+      body: { reset_password_code },
+      params: { resetPasswordToken }
+    }: ICombinedRequest<
+      null,
+      ResetPasswordCodePayload,
+      { resetPasswordToken: string }
+    >,
     res: Response
   ) => {
-    const session = await startSession()
     try {
-      const resetPassword = await resetPasswordService.getByValidAccessToken(
-        params.accessToken
-      )
+      const requestResetPassword =
+        await resetPasswordService.getByResetPasswordToken(resetPasswordToken)
 
-      if (!resetPassword) {
+      if (!requestResetPassword) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: 'Your request to reset password was invalid !',
+          message: 'Error could not execute your reset password request',
           status: StatusCodes.BAD_REQUEST
         })
       }
 
-      const user = await userService.getById(resetPassword.user_id)
+      if (requestResetPassword.is_disabled) {
+        return res.status(StatusCodes.NOT_IMPLEMENTED).json({
+          message:
+            'The code has exceed maximum 5 attempts. Please send a new reset password code request',
+          status: StatusCodes.NOT_IMPLEMENTED
+        })
+      }
+
+      if (
+        isRequestPasswordAttemptExpired(
+          requestResetPassword.resetpassword_expires_in
+        )
+      ) {
+        return res.status(StatusCodes.NOT_IMPLEMENTED).json({
+          message:
+            'The reset password code has expired. Please send a new reset password code request',
+          status: StatusCodes.NOT_IMPLEMENTED
+        })
+      }
+
+      if (reset_password_code !== requestResetPassword?.reset_password_code) {
+        requestResetPassword?.updateResetCodeAttempts(true)
+
+        await requestResetPassword.save()
+
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Incorrect password reset code',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      requestResetPassword?.updateResetCodeAttempts(false)
+      await requestResetPassword.save()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Reset password code was correct',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: error,
+        status: StatusCodes.BAD_REQUEST
+      })
+    }
+  },
+
+  resetNewPassword: async (
+    {
+      body,
+      params
+    }: ICombinedRequest<
+      null,
+      ResetNewPasswordPayload,
+      { resetPasswordToken: string }
+    >,
+    res: Response
+  ) => {
+    const session = await startSession()
+
+    try {
+      const requestResetPassword =
+        await resetPasswordService.getByResetPasswordToken(
+          params.resetPasswordToken
+        )
+      const user = await userService.getById(
+        requestResetPassword?.user_id as ObjectId
+      )
 
       if (!user) {
-        return res.status(StatusCodes.NOT_FOUND).json({
-          message: ReasonPhrases.NOT_FOUND,
-          status: StatusCodes.NOT_FOUND
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Error in update your account password',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      if (!requestResetPassword?.is_correct_reset_code) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'You havent entered the reset password code',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      if (body.newPassword !== body.confirmNewPassword) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Confirm password was not match',
+          status: StatusCodes.BAD_REQUEST
         })
       }
 
       session.startTransaction()
-      const hashedPassword = await createHash(password)
 
-      await userService.updatePasswordByUserId(
-        resetPassword.user_id,
-        hashedPassword,
-        session
-      )
+      const hashedPassword = await createHash(body.newPassword)
+
+      await userService.updatePasswordByUserId(user.id, hashedPassword, session)
 
       await resetPasswordService.deleteManyByUserId(user.id, session)
-
-      const { accessToken } = jwtSign(user.id)
 
       const userMail = new UserMail()
 
@@ -310,7 +399,6 @@ export const authController = {
       session.endSession()
 
       return res.status(StatusCodes.OK).json({
-        data: { accessToken },
         message: 'Password reset sucessfully',
         status: StatusCodes.OK
       })
@@ -321,13 +409,13 @@ export const authController = {
         await session.abortTransaction()
         session.endSession()
       }
-
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
+        message: error,
         status: StatusCodes.BAD_REQUEST
       })
     }
   },
+
   verificationRequest: async (
     { body: { email } }: IBodyRequest<VerificationRequestPayload>,
     res: Response

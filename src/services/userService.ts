@@ -108,7 +108,7 @@ export const userService = {
   deleteById: (userId: ObjectId, session?: ClientSession) =>
     UserSchema.deleteOne({ user: userId }, { session }),
 
-  addResetPasswordToUser: async (
+  addResetPasswordRequestToUser: async (
     {
       userId,
       resetPasswordId

@@ -20,10 +20,10 @@ export class UserMail extends Mailer {
 
   public async resetPassword({
     email,
-    accessToken
+    resetPasswordCode
   }: {
     email: string
-    accessToken: string
+    resetPasswordCode: string
   }) {
     try {
       await this.mailer.send({
@@ -34,7 +34,7 @@ export class UserMail extends Mailer {
           subject: 'Reset Password'
         },
         locals: {
-          accessToken
+          resetPasswordCode
         }
       })
     } catch (error) {

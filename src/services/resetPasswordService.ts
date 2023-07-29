@@ -4,23 +4,29 @@ import { ResetPasswordSchema } from '@/models'
 import { createDateNow } from '@/utils/dates'
 
 export const resetPasswordService = {
-  create: (
+  createResetPasswordRequest: (
     {
       userId,
-      accessToken,
+      resetPasswordToken,
+      resetCode,
       expiresIn
     }: {
       userId: ObjectId
-      accessToken: string
+      resetPasswordToken: string
+      resetCode: string
       expiresIn: Date
     },
     session?: ClientSession
   ) =>
     new ResetPasswordSchema({
-      user: userId,
-      accessToken,
-      expiresIn
+      user_id: userId,
+      reset_password_token: resetPasswordToken,
+      reset_password_code: resetCode,
+      resetpassword_expires_in: expiresIn
     }).save({ session }),
+
+  getByResetPasswordToken: (resetPasswordToken: string) =>
+    ResetPasswordSchema.findOne({ reset_password_token: resetPasswordToken }),
 
   getByValidAccessToken: (accessToken: string) =>
     ResetPasswordSchema.findOne({
@@ -29,5 +35,5 @@ export const resetPasswordService = {
     }),
 
   deleteManyByUserId: (userId: ObjectId, session?: ClientSession) =>
-    ResetPasswordSchema.deleteMany({ user: userId }, { session })
+    ResetPasswordSchema.deleteMany({ user_id: userId }, { session })
 }

@@ -10,8 +10,8 @@ export interface IVerification {
 export interface IResetPassword {
   user_id: ObjectId
   reset_password_token: string
-  reset_code: string
-  reset_code_attempts: number
+  reset_password_code: string
+  reset_password_code_attempts: number
   is_disabled: boolean
   is_correct_reset_code: boolean
   resetpassword_expires_in: Date
@@ -37,7 +37,16 @@ export interface IUserMethods {
   comparePassword: (password: string) => boolean
 }
 
+export interface IResetPasswordMethods {
+  updateResetCodeAttempts: (incorrectResetCode: boolean) => void
+}
+
 export type UserModel = Model<IUser, unknown, IUserMethods>
+export type ResetPasswordModel = Model<
+  IResetPassword,
+  unknown,
+  IResetPasswordMethods
+>
 
 export type VerificationRequestPayload = Pick<IUser, 'email'>
 

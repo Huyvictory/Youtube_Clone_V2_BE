@@ -1,6 +1,6 @@
 export enum ExpiresInMinutes {
   Verification = 30,
-  ResetPassword = 7
+  ResetPassword = 15
 }
 
 export enum Mimetype {

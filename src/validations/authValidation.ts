@@ -7,9 +7,10 @@ import {
   ResetPasswordPayload,
   SignInPayload,
   SignUpPayload,
-  NewPasswordPayload
+  ResetNewPasswordPayload,
+  ResetPasswordCodePayload
 } from '@/contracts/auth'
-import { IBodyRequest } from '@/contracts/request'
+import { IBodyRequest, ICombinedRequest } from '@/contracts/request'
 import { isValidPassword } from '@/utils/password'
 
 export const authValidation = {
@@ -114,6 +115,34 @@ export const authValidation = {
     }
   },
 
+  resetPasswordCodeValidation: async (
+    req: ICombinedRequest<
+      null,
+      ResetPasswordCodePayload,
+      { resetPasswordToken: string }
+    >,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      if (!req.body.reset_password_code) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'No reset password code was provided',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      next()
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: error,
+        status: StatusCodes.BAD_REQUEST
+      })
+    }
+  },
+
   resetPassword: (
     req: IBodyRequest<ResetPasswordPayload>,
     res: Response,
@@ -122,7 +151,7 @@ export const authValidation = {
     try {
       if (!req.body.email) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
+          message: 'No email has been sent',
           status: StatusCodes.BAD_REQUEST
         })
       }
@@ -137,7 +166,7 @@ export const authValidation = {
         !validator.isEmail(normalizedEmail, { allow_utf8_local_part: false })
       ) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
+          message: 'The email you typed was not a valid one',
           status: StatusCodes.BAD_REQUEST
         })
       }
@@ -149,24 +178,34 @@ export const authValidation = {
       winston.error(error)
 
       return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
+        message: error,
         status: StatusCodes.BAD_REQUEST
       })
     }
   },
 
   newPassword: (
-    req: IBodyRequest<NewPasswordPayload>,
+    req: ICombinedRequest<
+      null,
+      ResetNewPasswordPayload,
+      { resetPasswordToken: string }
+    >,
     res: Response,
     next: NextFunction
   ) => {
     try {
+      if (!req.body.newPassword || !req.body.confirmNewPassword) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Missing data to continue implementing the request',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
       if (
-        !req.body.password ||
-        !validator.isLength(req.body.password, { min: 6, max: 48 })
+        !isValidPassword(req.body.newPassword) ||
+        !isValidPassword(req.body.confirmNewPassword)
       ) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
+          message: 'The requested passwords are invalid',
           status: StatusCodes.BAD_REQUEST
         })
       }

@@ -12,16 +12,21 @@ export const auth = (router: Router): void => {
   router.get('/auth/sign-out', authGuard.isAuth, authController.signOut)
 
   router.post(
-    '/auth/password/reset',
-    authGuard.isGuest,
+    '/auth/password/request-reset',
     authValidation.resetPassword,
-    authController.resetPassword
+    authController.resetPassswordRequest
+  )
+
+  router.put(
+    '/auth/password/check-reset-password-code/:resetPasswordToken',
+    authValidation.resetPasswordCodeValidation,
+    authController.validateResetPasswordCode
   )
 
   router.post(
-    '/auth/password/new/:accessToken',
+    '/auth/password/new/:resetPasswordToken',
     authValidation.newPassword,
-    authController.newPassword
+    authController.resetNewPassword
   )
 
   router.post('/auth/verification/request', authController.verificationRequest)
