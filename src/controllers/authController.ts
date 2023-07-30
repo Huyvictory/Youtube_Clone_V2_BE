@@ -368,9 +368,9 @@ export const authController = {
       }
 
       if (!requestResetPassword?.is_correct_reset_code) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
+        return res.status(StatusCodes.NOT_IMPLEMENTED).json({
           message: 'You havent entered the reset password code',
-          status: StatusCodes.BAD_REQUEST
+          status: StatusCodes.NOT_IMPLEMENTED
         })
       }
 
@@ -390,6 +390,7 @@ export const authController = {
       await resetPasswordService.deleteManyByUserId(user.id, session)
 
       const userMail = new UserMail()
+      const { accessToken } = jwtSign(user.id)
 
       userMail.successfullyUpdatedPassword({
         email: user.email
@@ -399,6 +400,7 @@ export const authController = {
       session.endSession()
 
       return res.status(StatusCodes.OK).json({
+        data: { accessToken },
         message: 'Password reset sucessfully',
         status: StatusCodes.OK
       })
