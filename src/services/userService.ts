@@ -8,12 +8,16 @@ export const userService = {
       email,
       password,
       firstname,
-      lastname
+      lastname,
+      Dob,
+      sex
     }: {
       email: string
       password: string
       firstname: string
       lastname: string
+      Dob: Date | null
+      sex: string | null
     },
     session?: ClientSession
   ) => {
@@ -23,7 +27,9 @@ export const userService = {
       password,
       firstname,
       lastname,
-      username
+      username,
+      Dob,
+      sex
     }).save({ session })
   },
 

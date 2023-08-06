@@ -27,7 +27,11 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
     },
     Dob: {
       type: Date,
-      default: undefined
+      default: null
+    },
+    sex: {
+      type: String,
+      default: null
     },
     channel_id: {
       type: Schema.Types.ObjectId
@@ -36,9 +40,9 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
       type: [{ type: Schema.Types.ObjectId, ref: 'Channel' }],
       default: []
     },
-    user_media_id: {
-      type: [{ type: Schema.Types.ObjectId, ref: 'Media' }],
-      default: []
+    user_avatar_media_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Media'
     },
     verified: {
       type: Boolean,

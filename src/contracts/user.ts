@@ -24,10 +24,11 @@ export interface IUser {
   firstname: string
   lastname: string
   username: string
-  Dob?: Date
+  Dob: Date | null
+  sex: string | null
   channel_id: ObjectId
   subscribed_channels: ObjectId[]
-  user_media_id: ObjectId[]
+  user_avatar_media_id: ObjectId
   verified: boolean
   verifications?: ObjectId[]
   resetPasswords?: ObjectId[]

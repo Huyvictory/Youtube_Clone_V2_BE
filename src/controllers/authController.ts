@@ -81,7 +81,7 @@ export const authController = {
 
   signUp: async (
     {
-      body: { email, password, firstname, lastname }
+      body: { email, password, firstname, lastname, Dob, sex }
     }: IBodyRequest<SignUpPayload>,
     res: Response
   ) => {
@@ -104,7 +104,9 @@ export const authController = {
           email,
           password: hashedPassword,
           firstname,
-          lastname
+          lastname,
+          Dob,
+          sex
         },
         session
       )
@@ -157,7 +159,6 @@ export const authController = {
         status: StatusCodes.OK
       })
     } catch (error) {
-      console.log(error)
       winston.error(error)
 
       if (session.inTransaction()) {

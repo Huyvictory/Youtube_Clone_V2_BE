@@ -101,7 +101,9 @@ export const authValidation = {
         email: normalizedEmail,
         password: req.body.password,
         firstname: req.body.firstname,
-        lastname: req.body.lastname
+        lastname: req.body.lastname,
+        Dob: req.body.Dob ?? null,
+        sex: req.body.sex ?? null
       })
 
       return next()

@@ -26,7 +26,12 @@ const schema = new Schema<IChannel, ChannelModel>(
     },
     channel_description_id: {
       type: Schema.Types.ObjectId,
-      ref: 'ChannelDescription'
+      ref: 'ChannelDescription',
+      default: null
+    },
+    channel_banner_media_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Media'
     }
   },
   { timestamps: true }
