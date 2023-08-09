@@ -4,14 +4,18 @@ import validator from 'validator'
 import { StatusCodes, ReasonPhrases } from 'http-status-codes'
 import winston from 'winston'
 
-import { IBodyRequest } from '@/contracts/request'
+import {
+  IBodyRequest,
+  ICombinedRequest,
+  IUserRequest
+} from '@/contracts/request'
 import {
   DeleteProfilePayload,
   UpdateEmailPayload,
   UpdatePasswordPayload,
-  UpdateProfilePayload,
   VerificationRequestPayload
 } from '@/contracts/user'
+import { isValidPassword } from '@/utils/password'
 
 export const userValidation = {
   verificationRequest: (
@@ -44,48 +48,6 @@ export const userValidation = {
       }
 
       Object.assign(req.body, { email: normalizedEmail })
-
-      return next()
-    } catch (error) {
-      winston.error(error)
-
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: ReasonPhrases.BAD_REQUEST,
-        status: StatusCodes.BAD_REQUEST
-      })
-    }
-  },
-
-  updateProfile: (
-    req: IBodyRequest<UpdateProfilePayload>,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      if (!req.body.firstname || !req.body.lastname) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
-          status: StatusCodes.BAD_REQUEST
-        })
-      }
-
-      const trimemdFirstName = validator.trim(req.body.firstname)
-      const trimemdLastName = validator.trim(req.body.lastname)
-
-      if (
-        !validator.isLength(trimemdFirstName, { min: 2, max: 48 }) ||
-        !validator.isLength(trimemdLastName, { min: 2, max: 48 })
-      ) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
-          status: StatusCodes.BAD_REQUEST
-        })
-      }
-
-      Object.assign(req.body, {
-        firstName: trimemdFirstName,
-        lastName: trimemdLastName
-      })
 
       return next()
     } catch (error) {
@@ -141,20 +103,49 @@ export const userValidation = {
   },
 
   updatePassword: (
-    { body: { oldPassword, newPassword } }: IBodyRequest<UpdatePasswordPayload>,
+    {
+      body: { oldPassword, newPassword, confirmNewPassword }
+    }: ICombinedRequest<IUserRequest, UpdatePasswordPayload>,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      if (
-        !oldPassword ||
-        !newPassword ||
-        !validator.isLength(newPassword, { min: 6, max: 48 })
-      ) {
+      if (!oldPassword || !newPassword || !confirmNewPassword) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
+          message: 'Invalid request to reset password',
           status: StatusCodes.BAD_REQUEST
         })
+      }
+
+      switch (true) {
+        case !isValidPassword(oldPassword):
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'Old password is invalid',
+            status: StatusCodes.BAD_REQUEST
+          })
+        case !isValidPassword(newPassword):
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'New password is invalid',
+            status: StatusCodes.BAD_REQUEST
+          })
+        case !isValidPassword(confirmNewPassword):
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'Confirm new password is invalid',
+            status: StatusCodes.BAD_REQUEST
+          })
+        case oldPassword === newPassword:
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'Old password and new password is the same',
+            status: StatusCodes.BAD_REQUEST
+          })
+        case newPassword !== confirmNewPassword:
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            // eslint-disable-next-line quotes
+            message: `New password and confirm new password does'nt match each other`,
+            status: StatusCodes.BAD_REQUEST
+          })
+        default:
+          break
       }
 
       return next()

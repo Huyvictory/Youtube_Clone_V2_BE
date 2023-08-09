@@ -5,13 +5,12 @@ import { userController } from '@/controllers'
 import { userValidation } from '@/validations'
 
 export const users = (router: Router): void => {
-  router.get('/me', authGuard.isAuth, userController.me)
+  router.get('/user/me', authGuard.isAuth, userController.me)
 
-  router.post(
-    '/user/update',
+  router.put(
+    '/user/update-profile',
     authGuard.isAuth,
-    userValidation.updateProfile,
-    userController.updateProfile
+    userController.updateUserProfile
   )
 
   router.post(
@@ -21,7 +20,7 @@ export const users = (router: Router): void => {
     userController.updateEmail
   )
 
-  router.post(
+  router.put(
     '/user/update/password',
     authGuard.isAuth,
     userValidation.updatePassword,

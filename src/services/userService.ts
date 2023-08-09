@@ -1,6 +1,7 @@
 import { ClientSession, ObjectId } from 'mongoose'
 
 import { UserSchema } from '@/models'
+import { UpdateProfilePayload } from '@/contracts/user'
 
 export const userService = {
   create: (
@@ -41,10 +42,13 @@ export const userService = {
 
   updatePasswordByUserId: (
     userId: ObjectId,
-    password: string,
+    newPassword: string,
     session?: ClientSession
   ) => {
-    const data = [{ _id: userId }, { password, resetPasswords: [] }]
+    const data = [
+      { _id: userId },
+      { password: newPassword, resetPasswords: [] }
+    ]
 
     let params = null
 
@@ -77,20 +81,28 @@ export const userService = {
 
   updateProfileByUserId: (
     userId: ObjectId,
-    { firstname, lastname }: { firstname: string; lastname: string },
+    payloadToUpdate: UpdateProfilePayload,
     session?: ClientSession
   ) => {
-    const data = [{ _id: userId }, { firstname, lastname }]
+    const newPayloadToUpdate = { ...payloadToUpdate }
+
+    for (const [key, value] of Object.entries(payloadToUpdate)) {
+      if (!value) {
+        delete (newPayloadToUpdate as Record<string, unknown>)[key]
+      }
+    }
+
+    const data = [{ _id: userId }, { ...newPayloadToUpdate }]
 
     let params = null
 
     if (session) {
       params = [...data, { session }]
     } else {
-      params = data
+      params = [...data, { new: true }]
     }
 
-    return UserSchema.updateOne(...params)
+    return UserSchema.findOneAndUpdate(...params)
   },
 
   updateEmailByUserId: (

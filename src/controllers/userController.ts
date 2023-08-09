@@ -15,12 +15,11 @@ import {
   UpdateProfilePayload
 } from '@/contracts/user'
 import {
-  mediaService,
   resetPasswordService,
   userService,
   verificationService
 } from '@/services'
-import { ExpiresInMinutes, MediaRefType } from '@/constants'
+import { ExpiresInMinutes } from '@/constants'
 import { addMinutesFromNow } from '@/utils/dates'
 import { createCryptoString } from '@/utils/cryptoString'
 import { UserMail } from '@/mailer'
@@ -33,47 +32,45 @@ export const userController = {
   ) => {
     if (!user) {
       return res.status(StatusCodes.NOT_FOUND).json({
-        message: ReasonPhrases.NOT_FOUND,
+        message: 'User not found',
         status: StatusCodes.NOT_FOUND
       })
     }
 
-    const media = await mediaService.findOneByRef({
-      refType: MediaRefType.User,
-      refId: user.id
-    })
+    // const media = await mediaService.findOneByRef({
+    //   refType: MediaRefType.User,
+    //   refId: user.id
+    // })
 
-    let image
     // if (media) {
     //   image = appUrl(await new Image(media).sharp({ width: 150, height: 150 }))
     // }
 
     return res.status(StatusCodes.OK).json({
-      data: { ...user.toJSON(), image },
+      data: { ...user.toJSON() },
       message: ReasonPhrases.OK,
       status: StatusCodes.OK
     })
   },
 
-  updateProfile: async (
+  updateUserProfile: async (
     {
       context: { user },
-      body: { firstname, lastname }
+      body
     }: ICombinedRequest<IUserRequest, UpdateProfilePayload>,
     res: Response
   ) => {
     try {
-      await userService.updateProfileByUserId(user.id, { firstname, lastname })
-
-      const userMail = new UserMail()
-
-      userMail.successfullyUpdatedProfile({
-        email: user.email
-      })
+      const userProfileAfterUpdate = await userService.updateProfileByUserId(
+        user.id,
+        {
+          ...body
+        }
+      )
 
       return res.status(StatusCodes.OK).json({
-        data: { firstname, lastname },
-        message: ReasonPhrases.OK,
+        data: userProfileAfterUpdate?.toJSON(),
+        message: 'Updated successfully !',
         status: StatusCodes.OK
       })
     } catch (error) {
@@ -197,34 +194,30 @@ export const userController = {
   updatePassword: async (
     {
       context: {
-        user: { email }
+        user: { id }
       },
       body: { oldPassword, newPassword }
     }: ICombinedRequest<IUserRequest, UpdatePasswordPayload>,
     res: Response
   ) => {
     try {
-      const user = await userService.getByEmail(email)
+      const user = await userService.getById(id)
 
       const comparePassword = user?.comparePassword(oldPassword)
 
-      if (!user || !comparePassword) {
-        return res.status(StatusCodes.FORBIDDEN).json({
-          message: ReasonPhrases.FORBIDDEN,
-          status: StatusCodes.FORBIDDEN
+      if (!comparePassword) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Old Password is incorrect',
+          status: StatusCodes.BAD_REQUEST
         })
       }
 
-      const hashedPassword = await createHash(newPassword)
+      const hashedNewPassword = await createHash(newPassword)
 
-      await userService.updatePasswordByUserId(user.id, hashedPassword)
-
-      const userMail = new UserMail()
-
-      userMail.successfullyUpdatedPassword({ email: user.email })
+      await userService.updatePasswordByUserId(user?.id, hashedNewPassword)
 
       return res.status(StatusCodes.OK).json({
-        message: ReasonPhrases.OK,
+        message: 'Updated password successfully !',
         status: StatusCodes.OK
       })
     } catch (error) {

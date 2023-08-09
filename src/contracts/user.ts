@@ -51,8 +51,9 @@ export type ResetPasswordModel = Model<
 
 export type VerificationRequestPayload = Pick<IUser, 'email'>
 
-export type UpdateProfilePayload = Required<
-  Pick<IUser, 'firstname' | 'lastname'>
+export type UpdateProfilePayload = Pick<
+  IUser,
+  'firstname' | 'lastname' | 'username' | 'Dob' | 'sex'
 >
 
 export type UpdateEmailPayload = Pick<IUser, 'email' | 'password'>
@@ -60,6 +61,7 @@ export type UpdateEmailPayload = Pick<IUser, 'email' | 'password'>
 export interface UpdatePasswordPayload {
   oldPassword: string
   newPassword: string
+  confirmNewPassword: string
 }
 
 export interface DeleteProfilePayload {
