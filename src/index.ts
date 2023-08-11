@@ -12,9 +12,14 @@ import {
 import { router } from '@/routes'
 import { i18next, i18nextHttpMiddleware } from '@/i18n'
 import winston from 'winston'
+import { initializeApp } from 'firebase/app'
+import config from '@/constants/firebase.config'
 
 mongoose.run()
 redis.run()
+
+//Initialize a firebase application
+initializeApp(config.firebaseConfig)
 
 const app: Express = express()
 

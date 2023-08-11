@@ -1,6 +1,5 @@
-import { join } from 'path'
 import { NextFunction, Request, Response } from 'express'
-import { StatusCodes, ReasonPhrases } from 'http-status-codes'
+import { StatusCodes } from 'http-status-codes'
 
 import { uploadSingleImage } from '@/infrastructure/upload'
 
@@ -11,26 +10,26 @@ export const uploadSingleImageMiddleware = (
 ) => {
   try {
     uploadSingleImage(req, res, err => {
-      if (err || !req.file) {
+      if (err || !req.file || !req.body.typeMedia) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: ReasonPhrases.BAD_REQUEST,
+          message: 'Your file or request was invalid, please try again',
           status: StatusCodes.BAD_REQUEST
         })
       }
 
       Object.assign(req, {
         file: {
-          ...req.file,
-          destination: process.env.STORAGE_PATH,
-          path: join(process.env.STORAGE_PATH, req.file.filename)
-        }
+          ...req.file
+        },
+        context: { file: { ...req.file } },
+        body: { ...req.body }
       })
 
       return next()
     })
   } catch (error) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      message: ReasonPhrases.BAD_REQUEST,
+      message: 'Error in proccessing your image, please try again',
       status: StatusCodes.BAD_REQUEST
     })
   }
