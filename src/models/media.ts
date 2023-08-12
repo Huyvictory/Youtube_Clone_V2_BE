@@ -6,7 +6,7 @@ const schema = new Schema<IMedia, MediaModel>(
   {
     media_type: {
       type: String,
-      enum: ['User', 'Video'],
+      enum: ['USER_PROFILE', 'CHANNEL_BANNER', 'VIDEO_THUMBNAIL'],
       required: true
     },
     media_file_name: {

@@ -1,15 +1,15 @@
 import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 
-import { uploadSingleImage } from '@/infrastructure/upload'
+import { uploadSingleMedia } from '@/infrastructure/upload'
 
-export const uploadSingleImageMiddleware = (
+export const uploadSingleMediaMiddleware = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    uploadSingleImage(req, res, err => {
+    uploadSingleMedia(req, res, err => {
       if (err || !req.file || !req.body.typeMedia) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           message: 'Your file or request was invalid, please try again',
@@ -21,16 +21,16 @@ export const uploadSingleImageMiddleware = (
         file: {
           ...req.file
         },
-        context: { file: { ...req.file } },
+        context: { ...req.context, file: { ...req.file } },
         body: { ...req.body }
       })
 
       return next()
     })
   } catch (error) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: 'Error in proccessing your image, please try again',
-      status: StatusCodes.BAD_REQUEST
+      status: StatusCodes.INTERNAL_SERVER_ERROR
     })
   }
 }

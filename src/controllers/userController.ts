@@ -61,12 +61,11 @@ export const userController = {
     res: Response
   ) => {
     try {
-      const userProfileAfterUpdate = await userService.updateProfileByUserId(
-        user.id,
-        {
+      const userProfileAfterUpdate = await userService
+        .updateProfileByUserId(user.id, {
           ...body
-        }
-      )
+        })
+        .populate('user_avatar_media_id')
 
       return res.status(StatusCodes.OK).json({
         data: userProfileAfterUpdate?.toJSON(),

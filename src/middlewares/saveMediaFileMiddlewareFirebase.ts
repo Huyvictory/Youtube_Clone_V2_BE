@@ -43,7 +43,11 @@ export const saveMediaFileFirebase = async (
     const downloadURL = await getDownloadURL(snapshot.ref)
 
     Object.assign(req, {
-      body: { ...req.body, mediaUrl: downloadURL }
+      body: {
+        ...req.body,
+        mediaUrl: downloadURL,
+        mediaFileName: snapshot.ref.name
+      }
     })
 
     return next()

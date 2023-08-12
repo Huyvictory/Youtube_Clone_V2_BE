@@ -97,7 +97,25 @@ export const userService = {
     let params = null
 
     if (session) {
-      params = [...data, { session }]
+      params = [...data, { session, new: true }]
+    } else {
+      params = [...data, { new: true }]
+    }
+
+    return UserSchema.findOneAndUpdate(...params)
+  },
+
+  updateUserAvatar: (
+    userId: ObjectId,
+    user_avatar_media_id: ObjectId,
+    session?: ClientSession
+  ) => {
+    const data = [{ _id: userId }, { user_avatar_media_id }]
+
+    let params = null
+
+    if (session) {
+      params = [...data, { session, new: true }]
     } else {
       params = [...data, { new: true }]
     }

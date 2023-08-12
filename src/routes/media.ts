@@ -2,15 +2,15 @@ import { Router } from 'express'
 
 import { authGuard } from '@/guards'
 import { mediaController } from '@/controllers'
-import { uploadSingleImageMiddleware } from '@/middlewares'
+import { uploadSingleMediaMiddleware } from '@/middlewares'
 import { saveMediaFileFirebase } from '@/middlewares/saveMediaFileMiddlewareFirebase'
 
 export const media = (router: Router): void => {
-  router.post(
-    '/media/image/upload',
+  router.put(
+    '/update/user/avatar_profile',
     authGuard.isAuth,
-    uploadSingleImageMiddleware,
+    uploadSingleMediaMiddleware,
     saveMediaFileFirebase,
-    mediaController.imageUpload
+    mediaController.updateOrCreate_UserAvatar
   )
 }

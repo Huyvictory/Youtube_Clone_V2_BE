@@ -24,7 +24,9 @@ export const authMiddleware = async (
     )
     if (isAccessTokenExpired) return next()
 
-    const user = await userService.getById(id).populate('resetPasswords')
+    const user = await userService
+      .getById(id)
+      .populate('resetPasswords user_avatar_media_id')
     if (!user) return next()
 
     Object.assign(req, {

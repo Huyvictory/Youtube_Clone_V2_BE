@@ -1,7 +1,7 @@
 import { ClientSession, ObjectId } from 'mongoose'
 
 import { MediaSchema } from '@/models'
-import { CreateMediaPayload } from '@/contracts/media'
+import { CreateOrUpdateAvatarPayload } from '@/contracts/media'
 import { MediaRefType } from '@/constants'
 
 export const mediaService = {
@@ -23,27 +23,39 @@ export const mediaService = {
     refId: ObjectId
   }) => MediaSchema.find({ refType, refId }),
 
-  // create: (
-  //   {
-  //     originalname,
-  //     encoding,
-  //     mimetype,
-  //     destination,
-  //     filename,
-  //     path,
-  //     size
-  //   }: CreateMediaPayload,
-  //   session?: ClientSession
-  // ) =>
-  //   new MediaSchema({
-  //     originalname,
-  //     encoding,
-  //     mimetype,
-  //     destination,
-  //     filename,
-  //     path,
-  //     size
-  //   }).save({ session }),
+  createOrUpdateImage: (
+    {
+      media_id,
+      media_type,
+      media_file_name,
+      media_url,
+      media_user_id
+    }: CreateOrUpdateAvatarPayload,
+    session?: ClientSession
+  ) => {
+    const operationData = [
+      { _id: media_id },
+      { media_type, media_file_name, media_url, media_user_id }
+    ]
+
+    let paramsQuery = null
+    if (session) {
+      paramsQuery = [...operationData, { new: true, session }]
+    } else {
+      paramsQuery = [...operationData, { new: true }]
+    }
+
+    if (!media_id) {
+      return new MediaSchema({
+        media_file_name,
+        media_type,
+        media_url,
+        media_user_id
+      }).save({ session })
+    }
+
+    return MediaSchema.findOneAndUpdate(...paramsQuery)
+  }
 
   // updateById: (
   //   mediaId: ObjectId,
