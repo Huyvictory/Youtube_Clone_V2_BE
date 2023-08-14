@@ -4,3 +4,5 @@ public
 *.log
 .DS_Store
 storage/public
+migrations
+unused_migration_files
