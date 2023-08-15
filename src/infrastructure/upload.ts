@@ -25,3 +25,7 @@ const upload = multer({
 })
 
 export const uploadSingleMedia = upload.single('file')
+export const uploadMultipleFilesMedia = upload.fields([
+  { name: 'video_thumbnail', maxCount: 1 },
+  { name: 'video', maxCount: 1 }
+])

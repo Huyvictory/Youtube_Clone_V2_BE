@@ -1,9 +1,11 @@
 import { Router } from 'express'
 
 import { authGuard } from '@/guards'
-import { mediaController } from '@/controllers'
+import { mediaController, videoController } from '@/controllers'
 import { uploadSingleMediaMiddleware } from '@/middlewares'
 import { saveMediaFileFirebase } from '@/middlewares/saveMediaFileMiddlewareFirebase'
+import { uploadMultipleMediasMiddleware } from '@/middlewares/uploadMultipleMediasMiddleware'
+import { saveMediaFilesVideoFirebase } from '@/middlewares/saveMediaFIlesVideoFirebase'
 
 export const media = (router: Router): void => {
   router.put(
@@ -12,5 +14,13 @@ export const media = (router: Router): void => {
     uploadSingleMediaMiddleware,
     saveMediaFileFirebase,
     mediaController.updateOrCreate_UserAvatar
+  )
+
+  router.post(
+    '/media/video-create',
+    authGuard.isAuth,
+    uploadMultipleMediasMiddleware,
+    saveMediaFilesVideoFirebase,
+    videoController.createVideo
   )
 }

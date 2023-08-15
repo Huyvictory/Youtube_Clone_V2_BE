@@ -14,11 +14,12 @@ const schema = new Schema<IVideo, VideoModel>(
     },
     video_thumbnail_media_id: {
       type: Schema.Types.ObjectId,
-      required: true,
-      ref: 'Media'
+      ref: 'Media',
+      required: true
     },
     video_description: {
-      type: String
+      type: String,
+      default: null
     },
     video_category_id: {
       type: Schema.Types.ObjectId,
@@ -55,6 +56,11 @@ const schema = new Schema<IVideo, VideoModel>(
     video_url: {
       type: String,
       required: true
+    },
+    video_playlists: {
+      type: [{ type: Schema.Types.ObjectId }],
+      ref: 'Playlist',
+      default: []
     }
   },
   { timestamps: true }
