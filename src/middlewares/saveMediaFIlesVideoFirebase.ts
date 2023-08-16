@@ -47,6 +47,8 @@ export const saveMediaFilesVideoFirebase = async (
         url: downloadURL_VideoThumbnail,
         mediaFileName: snapshotVideoThumbnail.ref.name
       })
+    } else {
+      mediaFilesDetails.push(null)
     }
 
     // Video

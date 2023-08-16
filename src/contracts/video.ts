@@ -16,14 +16,14 @@ export interface IVideo {
   video_playlists: ObjectId[]
 }
 
-export type CreateVideoPayload = Pick<
-  IVideo,
-  | 'channel_id'
-  | 'video_title'
-  | 'video_thumbnail_media_id'
-  | 'video_category_id'
-  | 'video_file_name'
-  | 'video_url'
->
+export type CreateVideoPayload = {
+  channel_id: ObjectId
+  video_title: string
+  video_thumbnail_media_id: ObjectId
+  video_category_id: ObjectId
+  video_file_name: string
+  video_url: string
+  video_description?: string
+}
 
 export type VideoModel = Model<IVideo>

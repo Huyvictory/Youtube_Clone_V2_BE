@@ -66,4 +66,16 @@ const schema = new Schema<IVideo, VideoModel>(
   { timestamps: true }
 )
 
+schema.methods.toJSON = function () {
+  const obj = this.toObject()
+
+  const resObj = {
+    ...obj,
+    video_like_count: obj.video_like_count.length,
+    video_dislike_count: obj.video_dislike_count.length
+  }
+
+  return resObj
+}
+
 export const VideoSchema = model<IVideo, VideoModel>('Video', schema)

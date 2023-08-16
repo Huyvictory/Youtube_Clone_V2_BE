@@ -11,16 +11,27 @@ export const uploadMultipleMediasMiddleware = (
 ) => {
   try {
     uploadMultipleFilesMedia(req, res, err => {
-      if (err || !req.files['video_thumbnail'] || !req.files['video']) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-          message: 'Your file or request was invalid, please try again',
-          status: StatusCodes.BAD_REQUEST
-        })
+      if (req.method == 'POST') {
+        if (err || !req.files['video_thumbnail'] || !req.files['video']) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'Your file or request was invalid, please try again',
+            status: StatusCodes.BAD_REQUEST
+          })
+        }
+      } else if (req.method == 'PUT') {
+        if (err) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+            message: 'Your file or request was invalid, please try again',
+            status: StatusCodes.BAD_REQUEST
+          })
+        }
       }
 
       if (
-        req.files['video'][0].mimetype.split('/')[0] !== 'video' ||
-        req.files['video_thumbnail'][0].mimetype.split('/')[0] !== 'image'
+        (req.files['video'] &&
+          req.files['video'][0].mimetype.split('/')[0] !== 'video') ||
+        (req.files['video_thumbnail'] &&
+          req.files['video_thumbnail'][0].mimetype.split('/')[0] !== 'image')
       ) {
         return res.status(StatusCodes.BAD_REQUEST).json({
           message: 'Invalid file type',
