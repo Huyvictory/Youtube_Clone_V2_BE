@@ -14,6 +14,14 @@ export const video = (router: Router): void => {
     videoController.createVideoCategory
   )
 
+  router.post(
+    '/media/video-create',
+    authGuard.isAuth,
+    uploadMultipleMediasMiddleware,
+    saveMediaFilesVideoFirebase,
+    videoController.createVideo
+  )
+
   router.get(
     '/video/getVideoDetail/:videoId',
     authGuard.isAuth,
@@ -26,5 +34,11 @@ export const video = (router: Router): void => {
     uploadMultipleMediasMiddleware,
     saveMediaFilesVideoFirebase,
     videoController.updateVideoDetailById
+  )
+
+  router.delete(
+    '/video/deleteVideoDetail/:videoId',
+    authGuard.isAuth,
+    videoController.deleteVideoById
   )
 }

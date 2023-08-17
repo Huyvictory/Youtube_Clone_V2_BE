@@ -5,7 +5,7 @@ import { CreateOrUpdateAvatarPayload } from '@/contracts/media'
 import { MediaRefType } from '@/constants'
 
 export const mediaService = {
-  getById: (mediaId: ObjectId) => MediaSchema.findById(mediaId),
+  getById: (mediaId: string) => MediaSchema.findById({ _id: mediaId }),
 
   findOneByRef: ({
     refType,
@@ -55,7 +55,9 @@ export const mediaService = {
     }
 
     return MediaSchema.findOneAndUpdate(...paramsQuery)
-  }
+  },
+  deleteById: (mediaId: string, session?: ClientSession) =>
+    MediaSchema.deleteOne({ _id: mediaId }, { session })
 
   // updateById: (
   //   mediaId: ObjectId,
@@ -74,9 +76,6 @@ export const mediaService = {
 
   //   return Media.updateOne(...params)
   // },
-
-  // deleteById: (mediaId: ObjectId, session?: ClientSession) =>
-  //   Media.deleteOne({ _id: mediaId }, { session }),
 
   // deleteManyByRef: (
   //   {

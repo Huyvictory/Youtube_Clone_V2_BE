@@ -36,5 +36,9 @@ export const videoService = {
       { ...payload },
       { session }
     )
+  },
+
+  deleteVideoById: (videoId: string, session: ClientSession) => {
+    return VideoSchema.deleteOne({ _id: videoId }, { session })
   }
 }

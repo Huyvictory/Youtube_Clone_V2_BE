@@ -206,5 +206,70 @@ export const videoController = {
         status: StatusCodes.INTERNAL_SERVER_ERROR
       })
     }
+  },
+
+  deleteVideoById: async (req: any, res: Response) => {
+    try {
+      if (!req.params.videoId) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Invalid request. Please try again',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+      const videoDetail = await videoService.getVideoById(req.params.videoId)
+
+      const videoThumbnail = await mediaService.getById(
+        String(videoDetail?.video_thumbnail_media_id)
+      )
+
+      const session = await startSession()
+
+      // Delete both video thumbnail and video files in firebase
+
+      const VideoThumbnailToDeleteRef = ref(
+        getStorage(),
+        `Images/${videoThumbnail?.media_file_name}`
+      )
+
+      deleteObject(VideoThumbnailToDeleteRef).catch(() => {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+          message: 'Error in trying to delete media file in firebase storage',
+          status: StatusCodes.INTERNAL_SERVER_ERROR
+        })
+      })
+
+      const VideoToDeleteRef = ref(
+        getStorage(),
+        `Videos/${videoDetail?.video_file_name}`
+      )
+
+      deleteObject(VideoToDeleteRef).catch(() => {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+          message: 'Error in trying to delete media file in firebase storage',
+          status: StatusCodes.INTERNAL_SERVER_ERROR
+        })
+      })
+
+      session.startTransaction()
+
+      //Delete video thumbnail, video documents in database
+      await mediaService.deleteById(videoThumbnail?.id, session)
+
+      await videoService.deleteVideoById(req.params.videoId, session)
+
+      await session.commitTransaction()
+      session.endSession()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Delete video successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
   }
 }
