@@ -13,6 +13,10 @@ export const videoService = {
     return VideoCategorySchema.insertMany(video_category_names)
   },
 
+  getVideoCategories: () => {
+    return VideoCategorySchema.find()
+  },
+
   createNewVideo: (payload: CreateVideoPayload, session: ClientSession) => {
     return new VideoSchema({
       channel_id: payload.channel_id,
@@ -27,6 +31,25 @@ export const videoService = {
 
   getVideoById: (videoId: string) => {
     return VideoSchema.findById({ _id: videoId })
+  },
+
+  getListVideos: ({
+    page,
+    limit,
+    videoCategory
+  }: {
+    page: number
+    limit: number
+    videoCategory?: Array<string> | string
+  }) => {
+    if (videoCategory) {
+      return VideoSchema.find({ video_category_id: { $in: videoCategory } })
+        .skip((page - 1) * limit)
+        .limit(limit)
+    }
+    return VideoSchema.find()
+      .skip((page - 1) * limit)
+      .limit(limit)
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

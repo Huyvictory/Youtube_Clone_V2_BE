@@ -8,10 +8,16 @@ import { saveMediaFilesVideoFirebase } from '@/middlewares/saveMediaFIlesVideoFi
 
 export const video = (router: Router): void => {
   router.post(
-    '/video/create/video-categories',
+    '/video-category/create',
     authGuard.isAuth,
     videoValidation.createVideoCategoryValidation,
     videoController.createVideoCategory
+  )
+
+  router.get(
+    '/video-category/getVideoCategories',
+    authGuard.isAuth,
+    videoController.getListVideoCategories
   )
 
   router.post(
@@ -26,6 +32,13 @@ export const video = (router: Router): void => {
     '/video/getVideoDetail/:videoId',
     authGuard.isAuth,
     videoController.getVideoDetailById
+  )
+
+  router.get(
+    '/video/getVideosList',
+    authGuard.isAuth,
+    videoValidation.getListVideoValidation,
+    videoController.getVideosList
   )
 
   router.put(

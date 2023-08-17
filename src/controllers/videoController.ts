@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { IBodyRequest } from '@/contracts/request'
+import { IBodyRequest, IQueryRequest } from '@/contracts/request'
 import {
   CreateVideoCategoryPayload,
   IVideoCategory
@@ -45,6 +45,29 @@ export const videoController = {
       await videoService.createManyVideoCategories(video_category_names)
       return res.status(StatusCodes.OK).json({
         message: ReasonPhrases.OK,
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+
+  getListVideoCategories: async (req: Request, res: Response) => {
+    try {
+      const videoCategories = await videoService.getVideoCategories()
+
+      const videoCategoryDataList = videoCategories.map(videoCategory =>
+        videoCategory.toJSON()
+      )
+
+      return res.status(StatusCodes.OK).json({
+        data: videoCategoryDataList,
+        message: 'Get video categories successfully',
         status: StatusCodes.OK
       })
     } catch (error) {
@@ -112,6 +135,40 @@ export const videoController = {
       return res.status(StatusCodes.OK).json({
         data: { ...video?.toJSON() },
         message: 'Get video detail successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+
+  getVideosList: async (
+    {
+      query: { page, limit, videoCategory }
+    }: IQueryRequest<{
+      page: number
+      limit: number
+      videoCategory?: Array<string> | string
+    }>,
+    res: Response
+  ) => {
+    try {
+      const Videos_List = await videoService.getListVideos({
+        page: page,
+        limit: limit,
+        videoCategory:
+          typeof videoCategory === 'string' ? [videoCategory] : videoCategory
+      })
+
+      const returned_videosDataList = Videos_List.map(video => video.toJSON())
+
+      return res.status(StatusCodes.OK).json({
+        data: returned_videosDataList,
+        message: 'Get list videos successfully',
         status: StatusCodes.OK
       })
     } catch (error) {

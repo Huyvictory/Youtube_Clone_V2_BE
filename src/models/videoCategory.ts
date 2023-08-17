@@ -11,6 +11,20 @@ const schema = new Schema<IVideoCategory, VideoCategoryModel>(
   { timestamps: true }
 )
 
+schema.methods.toJSON = function () {
+  const obj = this.toObject()
+
+  const resObj = {
+    ...obj
+  }
+
+  delete resObj.createdAt
+  delete resObj.updatedAt
+  delete resObj.__v
+
+  return resObj
+}
+
 export const VideoCategorySchema = model<IVideoCategory, VideoCategoryModel>(
   'VideoCategory',
   schema
