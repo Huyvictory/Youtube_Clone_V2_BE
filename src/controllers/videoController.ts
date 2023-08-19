@@ -10,6 +10,7 @@ import { ReasonPhrases, StatusCodes } from 'http-status-codes'
 import { ObjectId, startSession } from 'mongoose'
 import { getStorage, ref, deleteObject } from 'firebase/storage'
 import winston from 'winston'
+import { channelService } from '@/services/channelService'
 
 export const videoController = {
   createVideoCategory: async (
@@ -98,7 +99,7 @@ export const videoController = {
         session
       )
 
-      await videoService.createNewVideo(
+      const newVideo = await videoService.createNewVideo(
         {
           channel_id: userDetail?.channel_id as ObjectId,
           video_category_id: req.body.video_category_id,
@@ -106,8 +107,15 @@ export const videoController = {
           video_thumbnail_media_id: newVideoThumbnailImage?.id,
           video_title: req.body.video_title,
           video_url: req.body.mediaFilesDetails[1].url,
-          video_description: req.body.video_description
+          video_description: req.body.video_description,
+          user_id: req.context.user.id
         },
+        session
+      )
+
+      await channelService.updateVideosChannel(
+        userDetail?.channel_id as ObjectId,
+        newVideo.id,
         session
       )
 
@@ -157,14 +165,39 @@ export const videoController = {
     res: Response
   ) => {
     try {
-      const Videos_List = await videoService.getListVideos({
-        page: page,
-        limit: limit,
-        videoCategory:
-          typeof videoCategory === 'string' ? [videoCategory] : videoCategory
-      })
+      const Videos_List = await videoService
+        .getListVideos({
+          page: page,
+          limit: limit,
+          videoCategory:
+            typeof videoCategory === 'string' ? [videoCategory] : videoCategory
+        })
+        .populate([
+          {
+            path: 'channel_id',
+            model: 'Channel',
+            select: ['channel_name']
+          }
+        ])
+        .populate({
+          path: 'video_thumbnail_media_id',
+          model: 'Media',
+          select: ['media_url']
+        })
+        .populate({
+          path: 'user_id',
+          model: 'User',
+          select: ['user_avatar_media_id'],
+          populate: {
+            path: 'user_avatar_media_id',
+            model: 'Media',
+            select: ['media_url']
+          }
+        })
 
-      const returned_videosDataList = Videos_List.map(video => video.toJSON())
+      const returned_videosDataList = Videos_List.map(video => {
+        return { ...video.toJSON(), user_id: video.user_id }
+      })
 
       return res.status(StatusCodes.OK).json({
         data: returned_videosDataList,
@@ -173,6 +206,7 @@ export const videoController = {
       })
     } catch (error) {
       winston.error(error)
+
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         message: ReasonPhrases.INTERNAL_SERVER_ERROR,
         status: StatusCodes.INTERNAL_SERVER_ERROR

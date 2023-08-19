@@ -25,7 +25,8 @@ export const videoService = {
       video_category_id: payload.video_category_id,
       video_file_name: payload.video_file_name,
       video_url: payload.video_url,
-      video_description: payload.video_description ?? null
+      video_description: payload.video_description ?? null,
+      user_id: payload.user_id
     }).save({ session })
   },
 

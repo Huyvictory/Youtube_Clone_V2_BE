@@ -21,7 +21,7 @@ export const video = (router: Router): void => {
   )
 
   router.post(
-    '/media/video-create',
+    '/video/create',
     authGuard.isAuth,
     uploadMultipleMediasMiddleware,
     saveMediaFilesVideoFirebase,

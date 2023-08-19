@@ -61,6 +61,11 @@ const schema = new Schema<IVideo, VideoModel>(
       type: [{ type: Schema.Types.ObjectId }],
       ref: 'Playlist',
       default: []
+    },
+    user_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
     }
   },
   { timestamps: true }

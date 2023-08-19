@@ -17,5 +17,16 @@ export const channelService = {
         }
       ],
       { session }
-    )
+    ),
+  updateVideosChannel: async (
+    channel_id: ObjectId,
+    video_id: ObjectId,
+    session?: ClientSession
+  ) => {
+    const ChannelDetail = await ChannelSchema.findById({ _id: channel_id })
+
+    ChannelDetail?.channel_videos?.push(video_id)
+
+    await ChannelDetail?.save({ session })
+  }
 }

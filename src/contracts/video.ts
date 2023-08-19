@@ -14,6 +14,9 @@ export interface IVideo {
   video_file_name: string
   video_url: string
   video_playlists: ObjectId[]
+  user_id: ObjectId
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type CreateVideoPayload = {
@@ -23,6 +26,7 @@ export type CreateVideoPayload = {
   video_category_id: ObjectId
   video_file_name: string
   video_url: string
+  user_id: ObjectId
   video_description?: string
 }
 
