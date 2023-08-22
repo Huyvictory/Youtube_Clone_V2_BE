@@ -8,17 +8,24 @@ export const channelController = {
     try {
       const channelDetail = await channelService
         .getChannelDetail({
-          channel_id: req.params.channelId
+          channel_id: req.context.user.channel_id
         })
         .populate({
           path: 'channel_videos',
           model: 'Video',
-          select: ['video_thumbnail_media_id', 'createdAt', 'video_views'],
-          populate: {
-            path: 'video_thumbnail_media_id',
-            model: 'Media',
-            select: ['media_url']
-          }
+          select: [
+            'video_thumbnail_media_id',
+            'createdAt',
+            'video_views',
+            'video_title'
+          ],
+          populate: [
+            {
+              path: 'video_thumbnail_media_id',
+              model: 'Media',
+              select: ['media_url']
+            }
+          ]
         })
         .populate({
           path: 'channel_owner_id',
