@@ -28,5 +28,8 @@ export const channelService = {
     ChannelDetail?.channel_videos?.push(video_id)
 
     await ChannelDetail?.save({ session })
+  },
+  getChannelDetail: ({ channel_id }: { channel_id: string }) => {
+    return ChannelSchema.findById({ _id: channel_id })
   }
 }

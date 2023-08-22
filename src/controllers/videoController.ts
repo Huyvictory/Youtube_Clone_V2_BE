@@ -138,7 +138,25 @@ export const videoController = {
 
   getVideoDetailById: async (req: Request, res: Response) => {
     try {
-      const video = await videoService.getVideoById(req.params.videoId)
+      const video = await videoService
+        .getVideoById(req.params.videoId)
+        .populate([
+          {
+            path: 'channel_id',
+            model: 'Channel',
+            select: ['channel_name', 'channel_subscribers']
+          }
+        ])
+        .populate({
+          path: 'user_id',
+          model: 'User',
+          select: ['user_avatar_media_id'],
+          populate: {
+            path: 'user_avatar_media_id',
+            model: 'Media',
+            select: ['media_url']
+          }
+        })
 
       return res.status(StatusCodes.OK).json({
         data: { ...video?.toJSON() },

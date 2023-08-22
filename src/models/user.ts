@@ -36,10 +36,6 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
     channel_id: {
       type: Schema.Types.ObjectId
     },
-    subscribed_channels: {
-      type: [{ type: Schema.Types.ObjectId, ref: 'Channel' }],
-      default: []
-    },
     user_avatar_media_id: {
       type: Schema.Types.ObjectId,
       ref: 'Media'
