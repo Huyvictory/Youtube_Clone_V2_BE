@@ -140,6 +140,11 @@ export const videoController = {
     try {
       const video = await videoService
         .getVideoById(req.params.videoId)
+        .populate({
+          path: 'video_thumbnail_media_id',
+          model: 'Media',
+          select: 'media_url'
+        })
         .populate([
           {
             path: 'channel_id',
