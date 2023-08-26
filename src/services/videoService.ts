@@ -37,17 +37,33 @@ export const videoService = {
   getListVideos: ({
     page,
     limit,
-    videoCategory
+    videoCategory,
+    channelId
   }: {
     page: number
     limit: number
     videoCategory?: Array<string> | string
+    channelId?: string
   }) => {
+    let queryStringsObject = {}
+
     if (videoCategory) {
-      return VideoSchema.find({ video_category_id: { $in: videoCategory } })
+      queryStringsObject = {
+        ...queryStringsObject,
+        video_category_id: { $in: videoCategory }
+      }
+    }
+
+    if (channelId) {
+      queryStringsObject = { ...queryStringsObject, channel_id: channelId }
+    }
+
+    if (Object.keys(queryStringsObject).length) {
+      return VideoSchema.find({ ...queryStringsObject })
         .skip((page - 1) * limit)
         .limit(limit)
     }
+
     return VideoSchema.find()
       .skip((page - 1) * limit)
       .limit(limit)

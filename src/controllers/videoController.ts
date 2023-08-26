@@ -179,11 +179,12 @@ export const videoController = {
 
   getVideosList: async (
     {
-      query: { page, limit, videoCategory }
+      query: { page, limit, videoCategory, channelId }
     }: IQueryRequest<{
       page: number
       limit: number
       videoCategory?: Array<string> | string
+      channelId?: string
     }>,
     res: Response
   ) => {
@@ -193,7 +194,8 @@ export const videoController = {
           page: page,
           limit: limit,
           videoCategory:
-            typeof videoCategory === 'string' ? [videoCategory] : videoCategory
+            typeof videoCategory === 'string' ? [videoCategory] : videoCategory,
+          channelId
         })
         .populate([
           {
