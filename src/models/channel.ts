@@ -31,7 +31,8 @@ const schema = new Schema<IChannel, ChannelModel>(
     },
     channel_banner_media_id: {
       type: Schema.Types.ObjectId,
-      ref: 'Media'
+      ref: 'Media',
+      default: null
     },
     subscribed_channels: {
       type: [{ type: Schema.Types.ObjectId, ref: 'User' }],

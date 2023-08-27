@@ -21,9 +21,7 @@ export const saveMediaFileFirebase = async (
   try {
     const storageRef = ref(
       storage,
-      req.body.typeMedia === 'image'
-        ? `Images/${req?.file?.originalname} ${dayjs().format()}`
-        : `Videos/${req?.file?.originalname} ${dayjs().format()}`
+      `Images/${req?.file?.originalname} ${dayjs().format()}`
     )
 
     // Create file metadata including the content type
