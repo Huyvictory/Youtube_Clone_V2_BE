@@ -14,10 +14,17 @@ const schema = new Schema<IPlaylist, PlaylistModel>(
     },
     playlist_channel_id: {
       type: Schema.Types.ObjectId,
-      ref: 'Channel'
+      ref: 'Channel',
+      required: true
     },
     playlist_description: {
-      type: String
+      type: String,
+      default: null
+    },
+    playlist_user_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
     }
   },
   { timestamps: true }
