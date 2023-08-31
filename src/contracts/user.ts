@@ -34,6 +34,10 @@ export interface IUser {
   resetPasswords?: ObjectId[]
 }
 
+export type userContext = {
+  user: IUser
+}
+
 export interface IUserMethods {
   comparePassword: (password: string) => boolean
 }

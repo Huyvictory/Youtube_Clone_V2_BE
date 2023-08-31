@@ -8,4 +8,11 @@ export interface IPlaylist {
   playlist_user_id: ObjectId
 }
 
+export type createPlaylistPayload = {
+  playlist_name: string
+  playlist_channel_id: ObjectId
+  playlist_description?: string
+  playlist_user_id: ObjectId
+}
+
 export type PlaylistModel = Model<IPlaylist>

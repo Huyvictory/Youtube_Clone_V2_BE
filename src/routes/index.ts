@@ -5,12 +5,13 @@ import { users } from './users'
 import { media } from './media'
 import { video } from './video'
 import { channel } from './channel'
+import { playlist } from './playlist'
 
 const router: Router = Router()
 
 const routes: {
   [key: string]: (router: Router) => void
-} = { auth, users, media, video, channel }
+} = { auth, users, media, video, channel, playlist }
 
 for (const route in routes) {
   routes[route](router)
