@@ -10,9 +10,9 @@ export const uploadSingleMediaMiddleware = (
 ) => {
   try {
     uploadSingleMedia(req, res, err => {
-      if (err || !req.file || !req.body.typeMedia) {
+      if (err || !req.file) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-          message: 'Your file or request was invalid, please try again',
+          message: 'Your image file or request was invalid, please try again',
           status: StatusCodes.BAD_REQUEST
         })
       }

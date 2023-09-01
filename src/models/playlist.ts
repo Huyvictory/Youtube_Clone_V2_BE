@@ -17,6 +17,11 @@ const schema = new Schema<IPlaylist, PlaylistModel>(
       ref: 'Channel',
       required: true
     },
+    playlist_respresentation_image_id: {
+      type: Schema.Types.ObjectId,
+      ref: 'Media',
+      default: null
+    },
     playlist_description: {
       type: String,
       default: null

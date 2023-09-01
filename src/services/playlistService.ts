@@ -1,5 +1,6 @@
 import { createPlaylistPayload } from '@/contracts/playlist'
-import { PlaylistSchema } from '@/models'
+import { MediaSchema, PlaylistSchema } from '@/models'
+import { ClientSession } from 'mongoose'
 
 export const playlistService = {
   createPlaylist: (payload: createPlaylistPayload) => {
@@ -15,5 +16,46 @@ export const playlistService = {
   },
   getListPlaylists_UserChannel: (payload: { channel_id: string }) => {
     return PlaylistSchema.find({ playlist_channel_id: payload.channel_id })
+  },
+  updateInformation_Playlist: (
+    payload: {
+      playlist_name?: string
+      playlist_description?: string
+      playlist_respresentation_image_id?: string
+    },
+    playlist_id: string,
+    session?: ClientSession
+  ) => {
+    if (session) {
+      return PlaylistSchema.updateOne(
+        { _id: playlist_id },
+        { ...payload },
+        { session }
+      )
+    }
+    return PlaylistSchema.updateOne({ _id: playlist_id }, { ...payload })
+  },
+  createOrUpdateRepresentationImage_Playlist: (
+    payload: {
+      media_type: string
+      media_file_name: string
+      media_url: string
+      media_user_id: string
+    },
+    session: ClientSession,
+    playlist_respresentation_image_id: string | null
+  ) => {
+    if (playlist_respresentation_image_id) {
+      return MediaSchema.findOneAndUpdate(
+        { _id: playlist_respresentation_image_id },
+        {
+          media_file_name: payload.media_file_name,
+          media_url: payload.media_url
+        },
+        { session, new: true }
+      )
+    }
+
+    return new MediaSchema({ ...payload }).save({ session })
   }
 }
