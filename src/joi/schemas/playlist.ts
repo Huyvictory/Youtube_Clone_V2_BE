@@ -5,4 +5,8 @@ const userCreatePlaylist_Schema = Joi.object({
   playlist_description: Joi.string()
 })
 
-export { userCreatePlaylist_Schema }
+const updateVideoPlaylist_Schema = Joi.object({
+  videoId: Joi.string().required()
+})
+
+export { userCreatePlaylist_Schema, updateVideoPlaylist_Schema }

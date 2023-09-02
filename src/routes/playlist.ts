@@ -36,8 +36,24 @@ export const playlist = (router: Router): void => {
   router.post(
     '/playlist/update/representation-image/:playlistId',
     authGuard.isAuth,
+    playlistValidation.isPlaylistExists,
     uploadSingleMediaMiddleware,
     saveMediaFileFirebase,
     playlistController.createOrupdateRepresentationImage_Playlist
+  )
+
+  router.patch(
+    '/playlist/update/video/:playlistId',
+    authGuard.isAuth,
+    playlistValidation.isPlaylistExists,
+    playlistValidation.updateVideoPlaylistValidation,
+    playlistController.addOrDeleteVideoPlaylist
+  )
+
+  router.delete(
+    '/playlist/delete/:playlistId',
+    authGuard.isAuth,
+    playlistValidation.isPlaylistExists,
+    playlistController.deletePlaylist
   )
 }

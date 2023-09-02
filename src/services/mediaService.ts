@@ -57,7 +57,7 @@ export const mediaService = {
     return MediaSchema.findOneAndUpdate(...paramsQuery)
   },
   deleteById: (mediaId: string, session?: ClientSession) =>
-    MediaSchema.deleteOne({ _id: mediaId }, { session })
+    MediaSchema.findByIdAndDelete({ _id: mediaId }, { session })
 
   // updateById: (
   //   mediaId: ObjectId,

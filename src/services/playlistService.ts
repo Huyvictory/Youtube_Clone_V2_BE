@@ -1,6 +1,6 @@
 import { createPlaylistPayload } from '@/contracts/playlist'
 import { MediaSchema, PlaylistSchema } from '@/models'
-import { ClientSession } from 'mongoose'
+import mongoose, { ClientSession } from 'mongoose'
 
 export const playlistService = {
   createPlaylist: (payload: createPlaylistPayload) => {
@@ -57,5 +57,33 @@ export const playlistService = {
     }
 
     return new MediaSchema({ ...payload }).save({ session })
+  },
+  addOrDeleteVideoPlaylist: async (
+    payload: { videoId: string },
+    playlistId: string
+  ) => {
+    const playlistDetail = await PlaylistSchema.findById({ _id: playlistId })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const videoIDObjectId: any = new mongoose.Types.ObjectId(payload.videoId)
+
+    if (!playlistDetail?.playlist_videos.includes(videoIDObjectId)) {
+      playlistDetail?.playlist_videos.push(videoIDObjectId)
+    } else {
+      playlistDetail.playlist_videos = playlistDetail.playlist_videos.filter(
+        videoId => String(videoId) !== String(videoIDObjectId)
+      )
+    }
+
+    return await playlistDetail?.save()
+  },
+  deletePlaylistById: (
+    payload: { playlistId: string },
+    session: ClientSession
+  ) => {
+    return PlaylistSchema.findOneAndDelete(
+      { _id: payload.playlistId },
+      { session }
+    )
   }
 }

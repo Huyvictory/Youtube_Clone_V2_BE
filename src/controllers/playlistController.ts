@@ -7,6 +7,7 @@ import { ReasonPhrases, StatusCodes } from 'http-status-codes'
 import { startSession } from 'mongoose'
 import winston from 'winston'
 import { getStorage, ref, deleteObject } from 'firebase/storage'
+import { mediaService } from '@/services'
 
 export const playlistController = {
   createPlaylist: async (
@@ -168,6 +169,85 @@ export const playlistController = {
       return res.status(StatusCodes.OK).json({
         data: { mediaUrl },
         message: 'Update playlist image successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+  addOrDeleteVideoPlaylist: async (req: Request, res: Response) => {
+    try {
+      await playlistService.addOrDeleteVideoPlaylist(
+        {
+          videoId: req.body.videoId
+        },
+        req.params.playlistId
+      )
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Update video playlist successfully !',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+  deletePlaylist: async (req: Request, res: Response) => {
+    try {
+      const session = await startSession()
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const playlistDetail: any = await playlistService
+        .getPlaylistDetail({
+          playlist_id: req.params.playlistId
+        })
+        .populate('playlist_respresentation_image_id')
+
+      session.startTransaction()
+
+      if (playlistDetail?.playlist_respresentation_image_id) {
+        mediaService
+          .deleteById(
+            String(playlistDetail.playlist_respresentation_image_id._id),
+            session
+          )
+          .then(() => {
+            const representationPlaylistToDeleteRef = ref(
+              getStorage(),
+              `Images/${playlistDetail.playlist_respresentation_image_id.media_file_name}`
+            )
+
+            deleteObject(representationPlaylistToDeleteRef).catch(() => {
+              return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                message: 'Error in trying to delete image in firebase storage',
+                status: StatusCodes.INTERNAL_SERVER_ERROR
+              })
+            })
+          })
+      }
+
+      await playlistService.deletePlaylistById(
+        {
+          playlistId: req.params.playlistId
+        },
+        session
+      )
+
+      await session.commitTransaction()
+      session.endSession()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Delete playlist successfully',
         status: StatusCodes.OK
       })
     } catch (error) {
