@@ -39,9 +39,44 @@ export const playlistController = {
   },
   getPlaylistDetail: async (req: Request, res: Response) => {
     try {
-      const playlistDetail = await playlistService.getPlaylistDetail({
-        playlist_id: req.params.playlistId
-      })
+      const playlistDetail = await playlistService
+        .getPlaylistDetail({
+          playlist_id: req.params.playlistId
+        })
+        .populate({
+          path: 'playlist_respresentation_image_id',
+          model: 'Media',
+          select: ['media_url']
+        })
+        .populate({
+          path: 'playlist_channel_id',
+          model: 'Channel',
+          select: 'channel_name'
+        })
+        .populate({
+          path: 'playlist_videos',
+          model: 'Video',
+          select: [
+            'video_title',
+            'video_thumbnail_media_id',
+            'video_views',
+            'channel_id',
+            'createdAt',
+            'updatedAt'
+          ],
+          populate: [
+            {
+              path: 'video_thumbnail_media_id',
+              model: 'Media',
+              select: ['media_url']
+            },
+            {
+              path: 'channel_id',
+              model: 'Channel',
+              select: ['channel_name']
+            }
+          ]
+        })
 
       return res.status(StatusCodes.OK).json({
         data: playlistDetail,
@@ -182,14 +217,46 @@ export const playlistController = {
   },
   addOrDeleteVideoPlaylist: async (req: Request, res: Response) => {
     try {
-      await playlistService.addOrDeleteVideoPlaylist(
-        {
-          videoId: req.body.videoId
-        },
-        req.params.playlistId
-      )
+      const addedOrDeletedVideo_Playlist = await playlistService
+        .addOrDeleteVideoPlaylist(
+          {
+            videoId: req.body.videoId
+          },
+          req.params.playlistId
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .then((videoAddedOrDeleted: any) =>
+          videoAddedOrDeleted
+            .populate({
+              path: 'playlist_videos',
+              model: 'Video',
+              select: [
+                'video_title',
+                'video_thumbnail_media_id',
+                'video_views',
+                'channel_id',
+                'createdAt',
+                'updatedAt'
+              ],
+              populate: [
+                {
+                  path: 'video_thumbnail_media_id',
+                  model: 'Media',
+                  select: ['media_url']
+                },
+                {
+                  path: 'channel_id',
+                  model: 'Channel',
+                  select: ['channel_name']
+                }
+              ]
+            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .then((data: any) => data)
+        )
 
       return res.status(StatusCodes.OK).json({
+        data: addedOrDeletedVideo_Playlist.playlist_videos,
         message: 'Update video playlist successfully !',
         status: StatusCodes.OK
       })

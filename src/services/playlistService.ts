@@ -73,6 +73,11 @@ export const playlistService = {
       playlistDetail.playlist_videos = playlistDetail.playlist_videos.filter(
         videoId => String(videoId) !== String(videoIDObjectId)
       )
+
+      return await PlaylistSchema.findOneAndUpdate(
+        { _id: playlistId },
+        { $set: { playlist_videos: [...playlistDetail.playlist_videos] } }
+      )
     }
 
     return await playlistDetail?.save()
