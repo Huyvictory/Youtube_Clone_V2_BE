@@ -94,9 +94,14 @@ export const playlistController = {
   },
   getListPlaylists_UserChannel: async (req: Request, res: Response) => {
     try {
-      const listPlaylists_UserChannel =
-        await playlistService.getListPlaylists_UserChannel({
+      const listPlaylists_UserChannel = await playlistService
+        .getListPlaylists_UserChannel({
           channel_id: req.params.channelId
+        })
+        .populate({
+          path: 'playlist_respresentation_image_id',
+          model: 'Media',
+          select: ['media_url']
         })
 
       return res.status(StatusCodes.OK).json({
@@ -315,6 +320,29 @@ export const playlistController = {
 
       return res.status(StatusCodes.OK).json({
         message: 'Delete playlist successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+
+  updateRepresentationPlaylistLink: async (req: Request, res: Response) => {
+    try {
+      const updatedPlaylistRepresentationLink =
+        await playlistService.updateRepresentationPlaylistLink({
+          media_id: req.body.media_id,
+          media_url: req.body.media_url
+        })
+
+      return res.status(200).json({
+        new_media_url: updatedPlaylistRepresentationLink?.media_url,
+        message: 'Update Playlist Representation Image Link successfully',
         status: StatusCodes.OK
       })
     } catch (error) {

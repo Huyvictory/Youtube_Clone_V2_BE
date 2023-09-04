@@ -94,5 +94,15 @@ export const playlistService = {
       { _id: payload.playlistId },
       { session }
     )
+  },
+  updateRepresentationPlaylistLink: (payload: {
+    media_id: string
+    media_url: string
+  }) => {
+    return MediaSchema.findByIdAndUpdate(
+      { _id: payload.media_id },
+      { media_url: payload.media_url },
+      { new: true }
+    )
   }
 }

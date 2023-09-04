@@ -51,6 +51,12 @@ export const playlist = (router: Router): void => {
     playlistController.addOrDeleteVideoPlaylist
   )
 
+  router.put(
+    '/playlist/update/representation-link',
+    authGuard.isAuth,
+    playlistController.updateRepresentationPlaylistLink
+  )
+
   router.delete(
     '/playlist/delete/:playlistId',
     authGuard.isAuth,
