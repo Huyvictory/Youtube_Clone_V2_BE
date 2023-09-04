@@ -30,10 +30,14 @@ export const playlistService = {
       return PlaylistSchema.updateOne(
         { _id: playlist_id },
         { ...payload },
-        { session }
+        { session, new: true }
       )
     }
-    return PlaylistSchema.updateOne({ _id: playlist_id }, { ...payload })
+    return PlaylistSchema.updateOne(
+      { _id: playlist_id },
+      { ...payload },
+      { new: true }
+    )
   },
   createOrUpdateRepresentationImage_Playlist: (
     payload: {

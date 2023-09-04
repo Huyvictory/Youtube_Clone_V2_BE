@@ -202,7 +202,7 @@ export const playlistController = {
       session.endSession()
 
       return res.status(StatusCodes.OK).json({
-        data: { mediaUrl },
+        data: mediaUrl,
         message: 'Update playlist image successfully',
         status: StatusCodes.OK
       })

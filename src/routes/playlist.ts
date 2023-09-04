@@ -29,6 +29,7 @@ export const playlist = (router: Router): void => {
   router.put(
     '/playlist/update/information/:playlistId',
     authGuard.isAuth,
+    playlistValidation.isPlaylistExists,
     playlistValidation.updateNameOrDescription,
     playlistController.updateNameOrDescription_Playlist
   )
