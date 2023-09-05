@@ -62,7 +62,11 @@ export const playlistController = {
             'video_views',
             'channel_id',
             'createdAt',
-            'updatedAt'
+            'updatedAt',
+            'video_url',
+            'video_like_count',
+            'video_dislike_count',
+            'user_id'
           ],
           populate: [
             {
@@ -73,7 +77,17 @@ export const playlistController = {
             {
               path: 'channel_id',
               model: 'Channel',
-              select: ['channel_name']
+              select: ['channel_name', 'channel_subscribers']
+            },
+            {
+              path: 'user_id',
+              model: 'User',
+              select: ['user_avatar_media_id'],
+              populate: {
+                path: 'user_avatar_media_id',
+                model: 'Media',
+                select: ['media_url']
+              }
             }
           ]
         })
