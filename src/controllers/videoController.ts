@@ -177,6 +177,26 @@ export const videoController = {
     }
   },
 
+  getPlaylistsOfVideo: async (req: Request, res: Response) => {
+    try {
+      const video = await videoService
+        .getVideoById(req.body.videoId)
+        .select('video_playlists')
+
+      return res.status(StatusCodes.OK).json({
+        data: video,
+        message: 'Get playlists of a video successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+
   getVideosList: async (
     {
       query: { page, limit, videoCategory, channelId }

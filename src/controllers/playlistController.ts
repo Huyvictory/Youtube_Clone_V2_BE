@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createPlaylistPayload } from '@/contracts/playlist'
 import { ICombinedRequest } from '@/contracts/request'
 import { userContext } from '@/contracts/user'
@@ -7,7 +8,7 @@ import { ReasonPhrases, StatusCodes } from 'http-status-codes'
 import { startSession } from 'mongoose'
 import winston from 'winston'
 import { getStorage, ref, deleteObject } from 'firebase/storage'
-import { mediaService } from '@/services'
+import { mediaService, videoService } from '@/services'
 
 export const playlistController = {
   createPlaylist: async (
@@ -236,12 +237,30 @@ export const playlistController = {
   },
   addOrDeleteVideoPlaylist: async (req: Request, res: Response) => {
     try {
+      const session = await startSession()
+
+      session.startTransaction()
+      const videoDetail = await videoService.getVideoById(req.body.videoId)
+
+      if (videoDetail?.video_playlists.includes(req.params.playlistId as any)) {
+        videoDetail.video_playlists = videoDetail.video_playlists.filter(
+          (el: any) => {
+            el !== req.params.playlistId
+          }
+        )
+      } else {
+        videoDetail?.video_playlists.push(req.params.playlistId as any)
+      }
+
+      videoDetail?.save({ session })
+
       const addedOrDeletedVideo_Playlist = await playlistService
         .addOrDeleteVideoPlaylist(
           {
             videoId: req.body.videoId
           },
-          req.params.playlistId
+          req.params.playlistId,
+          session
         )
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .then((videoAddedOrDeleted: any) =>
@@ -273,6 +292,9 @@ export const playlistController = {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .then((data: any) => data)
         )
+
+      await session.commitTransaction()
+      session.endSession()
 
       return res.status(StatusCodes.OK).json({
         data: addedOrDeletedVideo_Playlist.playlist_videos,

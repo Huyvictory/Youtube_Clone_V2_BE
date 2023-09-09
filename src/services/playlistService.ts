@@ -64,7 +64,8 @@ export const playlistService = {
   },
   addOrDeleteVideoPlaylist: async (
     payload: { videoId: string },
-    playlistId: string
+    playlistId: string,
+    session: ClientSession
   ) => {
     const playlistDetail = await PlaylistSchema.findById({ _id: playlistId })
 
@@ -80,11 +81,12 @@ export const playlistService = {
 
       return await PlaylistSchema.findOneAndUpdate(
         { _id: playlistId },
-        { $set: { playlist_videos: [...playlistDetail.playlist_videos] } }
+        { $set: { playlist_videos: [...playlistDetail.playlist_videos] } },
+        { session }
       )
     }
 
-    return await playlistDetail?.save()
+    return await playlistDetail?.save({ session })
   },
   deletePlaylistById: (
     payload: { playlistId: string },
