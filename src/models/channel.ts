@@ -33,10 +33,6 @@ const schema = new Schema<IChannel, ChannelModel>(
       type: Schema.Types.ObjectId,
       ref: 'Media',
       default: null
-    },
-    subscribed_channels: {
-      type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-      default: []
     }
   },
   { timestamps: true }

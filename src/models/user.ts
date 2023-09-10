@@ -51,6 +51,10 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
     resetPasswords: {
       type: [{ type: Schema.Types.ObjectId, ref: 'ResetPassword' }],
       default: []
+    },
+    subscribed_channels: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Channel' }],
+      default: []
     }
   },
   { timestamps: true }

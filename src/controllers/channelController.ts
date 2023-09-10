@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ICombinedRequest } from '@/contracts/request'
 import { IUser } from '@/contracts/user'
 import { userService } from '@/services'
 import { channelService } from '@/services/channelService'
 import { Request, Response } from 'express'
-import { StatusCodes } from 'http-status-codes'
+import { ReasonPhrases, StatusCodes } from 'http-status-codes'
 import { startSession } from 'mongoose'
 import winston from 'winston'
 import { getStorage, ref, deleteObject } from 'firebase/storage'
@@ -156,6 +157,96 @@ export const channelController = {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         message:
           'Error in trying to update or create your channel banner image',
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+  userSubscribeChannel: async (req: Request, res: Response) => {
+    const session = await startSession()
+    try {
+      const userDetail = await userService.getById(req.context.user.id)
+
+      const channelDetail: any = await channelService.getChannelDetail({
+        channel_id: req.body.channelId
+      })
+
+      if (!req.body.channelId || !channelDetail) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Invalid request please try again',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      session.startTransaction()
+
+      userDetail?.subscribed_channels.push(req.body.channelId)
+      channelDetail.channel_subscribers.push(userDetail?.id)
+
+      await userDetail?.save({ session })
+      await channelDetail?.save({ session })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Subscribe channel successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+  userUnsubscribeChannel: async (req: Request, res: Response) => {
+    const session = await startSession()
+    try {
+      const userDetail: any = await userService.getById(req.context.user.id)
+
+      const channelDetail: any = await channelService.getChannelDetail({
+        channel_id: req.body.channelId
+      })
+
+      if (!req.body.channelId || !channelDetail) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Invalid request please try again',
+          status: StatusCodes.BAD_REQUEST
+        })
+      }
+
+      session.startTransaction()
+
+      userDetail.subscribed_channels = userDetail.subscribed_channels.filter(
+        (el: any) => String(el) !== req.body.channelId
+      )
+
+      channelDetail.channel_subscribers =
+        channelDetail.channel_subscribers.filter(
+          (el: any) => String(el) !== userDetail?.id
+        )
+
+      await userDetail?.save({ session })
+      await channelDetail?.save({ session })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Unsubscribe channel successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+      if (session.inTransaction()) {
+        await session.abortTransaction()
+        session.endSession()
+      }
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
         status: StatusCodes.INTERNAL_SERVER_ERROR
       })
     }

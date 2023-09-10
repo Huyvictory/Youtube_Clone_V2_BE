@@ -19,4 +19,16 @@ export const channel = (router: Router): void => {
     saveMediaFileFirebase,
     channelController.updateOrCreate_ChannelBanner
   )
+
+  router.post(
+    '/channel/subscribe',
+    authGuard.isAuth,
+    channelController.userSubscribeChannel
+  )
+
+  router.post(
+    '/channel/unsubscribe',
+    authGuard.isAuth,
+    channelController.userUnsubscribeChannel
+  )
 }
