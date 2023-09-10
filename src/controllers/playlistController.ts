@@ -9,6 +9,7 @@ import { startSession } from 'mongoose'
 import winston from 'winston'
 import { getStorage, ref, deleteObject } from 'firebase/storage'
 import { mediaService, videoService } from '@/services'
+import { channelService } from '@/services/channelService'
 
 export const playlistController = {
   createPlaylist: async (
@@ -19,11 +20,20 @@ export const playlistController = {
     res: Response
   ) => {
     try {
-      await playlistService.createPlaylist({
-        ...body,
-        playlist_channel_id: user.channel_id,
-        playlist_user_id: user.id
+      const channelDetail = await channelService.getChannelDetail({
+        channel_id: String(user.channel_id)
       })
+
+      await playlistService
+        .createPlaylist({
+          ...body,
+          playlist_channel_id: user.channel_id,
+          playlist_user_id: user.id
+        })
+        .then(resDoc => {
+          channelDetail?.channel_playlist?.push(resDoc._id as any)
+          channelDetail?.save()
+        })
 
       return res.status(StatusCodes.CREATED).json({
         message: 'Create playlist successfully',
@@ -242,12 +252,14 @@ export const playlistController = {
       session.startTransaction()
       const videoDetail = await videoService.getVideoById(req.body.videoId)
 
-      if (videoDetail?.video_playlists.includes(req.params.playlistId as any)) {
-        videoDetail.video_playlists = videoDetail.video_playlists.filter(
-          (el: any) => {
-            el !== req.params.playlistId
-          }
-        )
+      if (
+        videoDetail?.video_playlists
+          .map(el => String(el))
+          .includes(req.params.playlistId)
+      ) {
+        videoDetail.video_playlists = videoDetail.video_playlists.filter(el => {
+          return String(el) !== req.params.playlistId
+        })
       } else {
         videoDetail?.video_playlists.push(req.params.playlistId as any)
       }
@@ -311,15 +323,18 @@ export const playlistController = {
     }
   },
   deletePlaylist: async (req: Request, res: Response) => {
+    const session = await startSession()
     try {
-      const session = await startSession()
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const playlistDetail: any = await playlistService
         .getPlaylistDetail({
           playlist_id: req.params.playlistId
         })
         .populate('playlist_respresentation_image_id')
+
+      const channelDetail = await channelService.getChannelDetail({
+        channel_id: String(req.context.user.channel_id)
+      })
 
       session.startTransaction()
 
@@ -344,12 +359,26 @@ export const playlistController = {
           })
       }
 
+      if (
+        channelDetail?.channel_playlist
+          ?.map(el => String(el))
+          .includes(req.params.playlistId)
+      ) {
+        channelDetail.channel_playlist = channelDetail.channel_playlist.filter(
+          el => String(el) !== req.params.playlistId
+        )
+
+        channelDetail.save({ session })
+      }
       await playlistService.deletePlaylistById(
         {
           playlistId: req.params.playlistId
         },
         session
       )
+
+      //Delete playlist data of videos
+      await videoService.updatePlaylistVideos(req.params.playlistId, session)
 
       await session.commitTransaction()
       session.endSession()
@@ -360,6 +389,11 @@ export const playlistController = {
       })
     } catch (error) {
       winston.error(error)
+
+      if (session.inTransaction()) {
+        await session.abortTransaction()
+        session.endSession()
+      }
 
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         message: ReasonPhrases.INTERNAL_SERVER_ERROR,

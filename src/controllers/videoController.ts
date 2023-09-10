@@ -180,7 +180,7 @@ export const videoController = {
   getPlaylistsOfVideo: async (req: Request, res: Response) => {
     try {
       const video = await videoService
-        .getVideoById(req.body.videoId)
+        .getVideoById(req.params.videoId)
         .select('video_playlists')
 
       return res.status(StatusCodes.OK).json({

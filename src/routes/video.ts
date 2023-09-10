@@ -35,7 +35,7 @@ export const video = (router: Router): void => {
   )
 
   router.get(
-    '/video/getPlaylistsVideo',
+    '/video/getPlaylistsVideo/:videoId',
     authGuard.isAuth,
     videoController.getPlaylistsOfVideo
   )

@@ -80,5 +80,19 @@ export const videoService = {
 
   deleteVideoById: (videoId: string, session: ClientSession) => {
     return VideoSchema.deleteOne({ _id: videoId }, { session })
+  },
+
+  updatePlaylistVideos: (deletedPlaylistId: string, session: ClientSession) => {
+    return VideoSchema.updateMany(
+      {
+        video_playlists: { $elemMatch: { $eq: deletedPlaylistId } }
+      },
+      {
+        $pull: {
+          video_playlists: deletedPlaylistId
+        }
+      },
+      { session }
+    )
   }
 }
