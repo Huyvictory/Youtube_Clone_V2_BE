@@ -25,6 +25,7 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
       type: String,
       required: true
     },
+
     Dob: {
       type: Date,
       default: null
@@ -32,6 +33,10 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
     sex: {
       type: String,
       default: null
+    },
+    subscribed_channels: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'Channel' }],
+      default: []
     },
     channel_id: {
       type: Schema.Types.ObjectId
@@ -50,10 +55,6 @@ const schema = new Schema<IUser, UserModel, IUserMethods>(
     },
     resetPasswords: {
       type: [{ type: Schema.Types.ObjectId, ref: 'ResetPassword' }],
-      default: []
-    },
-    subscribed_channels: {
-      type: [{ type: Schema.Types.ObjectId, ref: 'Channel' }],
       default: []
     }
   },

@@ -27,17 +27,9 @@ export const users = (router: Router): void => {
     userController.updatePassword
   )
 
-  // router.post(
-  //   '/user/update/avatar',
-  //   authGuard.isAuth,
-  //   userValidation.updateAvatar,
-  //   userController.updateAvatar
-  // )
-
-  router.post(
-    '/user/delete',
+  router.get(
+    '/user/subscribed-channels',
     authGuard.isAuth,
-    userValidation.deleteProfile,
-    userController.deleteProfile
+    userController.getListChannelsSubscribed
   )
 }

@@ -1,4 +1,4 @@
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { startSession } from 'mongoose'
 import { StatusCodes, ReasonPhrases } from 'http-status-codes'
 import winston from 'winston'
@@ -311,25 +311,52 @@ export const userController = {
         status: StatusCodes.BAD_REQUEST
       })
     }
+  },
+
+  getListChannelsSubscribed: async (req: Request, res: Response) => {
+    try {
+      const userDetail = await userService
+        .getById(req.context.user.id)
+        .populate({
+          path: 'subscribed_channels',
+          model: 'Channel',
+          select: ['channel_owner_id', 'channel_name'],
+          populate: {
+            path: 'channel_owner_id',
+            model: 'User',
+            select: ['user_avatar_media_id'],
+            populate: {
+              path: 'user_avatar_media_id',
+              model: 'Media',
+              select: ['media_url']
+            }
+          }
+        })
+
+      const dataSubscribedChannels = userDetail
+        ?.toJSON()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ?.subscribed_channels.map((el: any) => {
+          return {
+            ...el,
+            channel_image_url:
+              el.channel_owner_id.user_avatar_media_id.media_url,
+            channel_owner_id: undefined
+          }
+        })
+
+      return res.status(StatusCodes.OK).json({
+        data: dataSubscribedChannels,
+        message: 'Get list channels subscribed successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
   }
-
-  // deleteUserImages: async ({ userId }: { userId: ObjectId }) => {
-  //   const images = await mediaService.findManyByRef({
-  //     refType: MediaRefType.User,
-  //     refId: userId
-  //   })
-
-  //   const promises = []
-
-  //   for (let i = 0; i < images.length; i++) {
-  //     promises.push(new Image(images[i]).deleteFile())
-  //   }
-
-  //   await Promise.all(promises)
-
-  //   await mediaService.deleteManyByRef({
-  //     refType: MediaRefType.User,
-  //     refId: userId
-  //   })
-  // }
 }
