@@ -71,6 +71,7 @@ export const playlistController = {
             'video_title',
             'video_thumbnail_media_id',
             'video_views',
+            'video_description',
             'channel_id',
             'createdAt',
             'updatedAt',

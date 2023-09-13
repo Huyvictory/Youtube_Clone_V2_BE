@@ -14,7 +14,7 @@ export const channelController = {
     try {
       const channelDetail = await channelService
         .getChannelDetail({
-          channel_id: req.context.user.channel_id
+          channel_id: req.params.channelId
         })
         .populate({
           path: 'channel_videos',

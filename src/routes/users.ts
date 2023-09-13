@@ -28,7 +28,7 @@ export const users = (router: Router): void => {
   )
 
   router.get(
-    '/user/subscribed-channels',
+    '/user/subscribed-channels/:channelId',
     authGuard.isAuth,
     userController.getListChannelsSubscribed
   )

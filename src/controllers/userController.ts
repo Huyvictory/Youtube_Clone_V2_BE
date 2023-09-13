@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { startSession } from 'mongoose'
+import { ObjectId, startSession } from 'mongoose'
 import { StatusCodes, ReasonPhrases } from 'http-status-codes'
 import winston from 'winston'
 
@@ -24,6 +24,7 @@ import { addMinutesFromNow } from '@/utils/dates'
 import { createCryptoString } from '@/utils/cryptoString'
 import { UserMail } from '@/mailer'
 import { createHash } from '@/utils/hash'
+import { channelService } from '@/services/channelService'
 
 export const userController = {
   me: async (
@@ -315,12 +316,16 @@ export const userController = {
 
   getListChannelsSubscribed: async (req: Request, res: Response) => {
     try {
+      const channelDetail = await channelService.getChannelDetail({
+        channel_id: req.params.channelId
+      })
+
       const userDetail = await userService
-        .getById(req.context.user.id)
+        .getById(channelDetail?.channel_owner_id as ObjectId)
         .populate({
           path: 'subscribed_channels',
           model: 'Channel',
-          select: ['channel_owner_id', 'channel_name'],
+          select: ['channel_owner_id', 'channel_name', 'channel_subscribers'],
           populate: {
             path: 'channel_owner_id',
             model: 'User',
@@ -341,7 +346,8 @@ export const userController = {
             ...el,
             channel_image_url:
               el.channel_owner_id.user_avatar_media_id.media_url,
-            channel_owner_id: undefined
+            channel_owner_id: undefined,
+            channel_subscribers: el.channel_subscribers.length
           }
         })
 

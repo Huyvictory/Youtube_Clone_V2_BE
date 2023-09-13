@@ -7,7 +7,7 @@ import { saveMediaFileFirebase } from '@/middlewares/saveMediaFileMiddlewareFire
 
 export const channel = (router: Router): void => {
   router.get(
-    '/channel/details',
+    '/channel/details/:channelId',
     authGuard.isAuth,
     channelController.getChannelDetails
   )
