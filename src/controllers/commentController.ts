@@ -59,7 +59,7 @@ export const commentController = {
           populate: {
             path: 'comment_user_id',
             model: 'User',
-            select: ['user_avatar_media_id'],
+            select: ['user_avatar_media_id', 'username'],
             populate: {
               path: 'user_avatar_media_id',
               model: 'Media',
@@ -69,21 +69,19 @@ export const commentController = {
         })
 
       return res.status(StatusCodes.OK).json({
-        data: {
-          ...videoDetail?.toJSON(),
-          video_commments: videoDetail
-            ?.toJSON()
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .video_commments.map((el: any) => {
-              return {
-                ...el,
-                user_avatar_url:
-                  el.comment_user_id.user_avatar_media_id.media_url,
-                user_avatar_media_id: undefined,
-                comment_user_id: undefined
-              }
-            })
-        },
+        data: videoDetail
+          ?.toJSON()
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .video_commments.map((el: any) => {
+            return {
+              ...el,
+              user_avatar_url:
+                el.comment_user_id.user_avatar_media_id.media_url,
+              user_name: el.comment_user_id.username,
+              user_avatar_media_id: undefined,
+              comment_user_id: undefined
+            }
+          }),
         message: 'Get list comments of a video successfully',
         status: StatusCodes.OK
       })
