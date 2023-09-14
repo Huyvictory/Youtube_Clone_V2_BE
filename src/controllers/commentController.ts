@@ -79,7 +79,7 @@ export const commentController = {
                 el.comment_user_id.user_avatar_media_id.media_url,
               user_name: el.comment_user_id.username,
               user_avatar_media_id: undefined,
-              comment_user_id: undefined
+              comment_user_id: el.comment_user_id._id
             }
           }),
         message: 'Get list comments of a video successfully',
