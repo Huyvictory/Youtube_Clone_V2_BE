@@ -95,5 +95,61 @@ export const commentController = {
         status: StatusCodes.INTERNAL_SERVER_ERROR
       })
     }
+  },
+  updateCommentVideo: async (req: Request, res: Response) => {
+    try {
+      await commentService.updateCommentVideo({
+        commentId: req.params.commentId,
+        comment_content: req.body.comment_content
+      })
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Updated comment of a video successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+  deleteCommentVideo: async (req: Request, res: Response) => {
+    const session = await startSession()
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const videoDetail: any = await videoService.getVideoById(req.body.videoId)
+
+      session.startTransaction()
+
+      const deletedComment = await commentService.deleteCommentVideo(
+        { commentId: req.params.commentId },
+        session
+      )
+
+      videoDetail.video_commments = videoDetail?.video_commments.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (el: any) => String(el) !== deletedComment?.id
+      )
+
+      await videoDetail.save({ session })
+
+      await session.commitTransaction()
+      session.endSession()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Deleted comment of a video successfully !',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
   }
 }

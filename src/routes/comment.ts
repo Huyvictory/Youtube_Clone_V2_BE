@@ -16,4 +16,18 @@ export const comment = (router: Router): void => {
     authGuard.isAuth,
     commentController.getListCommentsVideo
   )
+
+  router.put(
+    '/comment/update/:commentId',
+    authGuard.isAuth,
+    commentValidation.updateCommentVideoValidation,
+    commentController.updateCommentVideo
+  )
+
+  router.delete(
+    '/comment/delete/:commentId',
+    authGuard.isAuth,
+    commentValidation.deleteCommentVideoValidation,
+    commentController.deleteCommentVideo
+  )
 }

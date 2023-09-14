@@ -19,5 +19,25 @@ export const commentService = {
 
   getListCommentsVideo: ({ videoId }: { videoId: string }) => {
     return VideoSchema.findById({ _id: videoId })
+  },
+
+  updateCommentVideo: ({
+    commentId,
+    comment_content
+  }: {
+    commentId: string
+    comment_content: string
+  }) => {
+    return CommentSchema.findByIdAndUpdate(
+      { _id: commentId },
+      { comment_content: comment_content }
+    )
+  },
+
+  deleteCommentVideo: (
+    { commentId }: { commentId: string },
+    session: ClientSession
+  ) => {
+    return CommentSchema.findByIdAndDelete({ _id: commentId }, { session })
   }
 }
