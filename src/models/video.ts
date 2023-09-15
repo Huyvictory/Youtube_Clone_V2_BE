@@ -73,11 +73,7 @@ schema.methods.toJSON = function () {
   const obj = this.toObject()
 
   const resObj = {
-    ...obj,
-    video_like_count: obj?.video_like_count ? obj.video_like_count?.length : 0,
-    video_dislike_count: obj?.video_dislike_count
-      ? obj.video_dislike_count?.length
-      : 0
+    ...obj
   }
 
   return resObj
