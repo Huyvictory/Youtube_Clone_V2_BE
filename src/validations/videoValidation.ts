@@ -6,6 +6,7 @@ import { IBodyRequest } from '@/contracts/request'
 import { CreateVideoCategoryPayload } from '@/contracts/videoCategory'
 import { Request } from 'express-serve-static-core'
 import { videoListQueryString_Schema } from '@/joi/schemas/video'
+import mongoose from 'mongoose'
 
 export const videoValidation = {
   createVideoCategoryValidation: (
@@ -68,6 +69,32 @@ export const videoValidation = {
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
         message: error.details[0].message,
         status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+
+  userLikeUnlikeVideoValidation: (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      if (
+        !req.body.userId ||
+        !mongoose.isObjectIdOrHexString(req.body.userId)
+      ) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+          message: 'Invalid request, please try again',
+          status: StatusCodes.OK
+        })
+      }
+
+      next()
+    } catch (error) {
+      winston.error(error)
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'Invalid request, please try again',
+        status: StatusCodes.OK
       })
     }
   }

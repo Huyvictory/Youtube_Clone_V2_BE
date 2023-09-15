@@ -407,5 +407,102 @@ export const videoController = {
         status: StatusCodes.INTERNAL_SERVER_ERROR
       })
     }
+  },
+
+  userLikeVideoId: async (req: Request, res: Response) => {
+    try {
+      const videoDetail = await videoService.getVideoById(req.params.videoId)
+
+      if (
+        videoDetail?.video_like_count
+          .map(el => String(el))
+          .includes(req.body.userId)
+      ) {
+        videoDetail.video_like_count = videoDetail.video_like_count.filter(
+          el => String(el) !== req.body.userId
+        )
+      } else if (
+        !videoDetail?.video_like_count
+          .map(el => String(el))
+          .includes(req.body.userId) &&
+        !videoDetail?.video_dislike_count
+          .map(el => String(el))
+          .includes(req.body.userId)
+      ) {
+        videoDetail?.video_like_count.push(req.body.userId)
+      } else if (
+        videoDetail?.video_dislike_count
+          .map(el => String(el))
+          .includes(req.body.userId)
+      ) {
+        videoDetail.video_dislike_count =
+          videoDetail.video_dislike_count.filter(
+            el => String(el) !== req.body.userId
+          )
+
+        videoDetail?.video_like_count.push(req.body.userId)
+      }
+
+      await videoDetail?.save()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Update like video successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
+  },
+  userUnlikeVideoId: async (req: Request, res: Response) => {
+    try {
+      const videoDetail = await videoService.getVideoById(req.params.videoId)
+
+      if (
+        videoDetail?.video_dislike_count
+          .map(el => String(el))
+          .includes(req.body.userId)
+      ) {
+        videoDetail.video_dislike_count =
+          videoDetail.video_dislike_count.filter(
+            el => String(el) !== req.body.userId
+          )
+      } else if (
+        !videoDetail?.video_like_count
+          .map(el => String(el))
+          .includes(req.body.userId) &&
+        !videoDetail?.video_dislike_count
+          .map(el => String(el))
+          .includes(req.body.userId)
+      ) {
+        videoDetail?.video_dislike_count.push(req.body.userId)
+      } else if (
+        videoDetail?.video_like_count
+          .map(el => String(el))
+          .includes(req.body.userId)
+      ) {
+        videoDetail.video_like_count = videoDetail.video_like_count.filter(
+          el => String(el) !== req.body.userId
+        )
+
+        videoDetail?.video_dislike_count.push(req.body.userId)
+      }
+
+      await videoDetail?.save()
+
+      return res.status(StatusCodes.OK).json({
+        message: 'Update dislike video successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
   }
 }

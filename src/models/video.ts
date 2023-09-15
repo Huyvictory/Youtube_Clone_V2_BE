@@ -37,12 +37,10 @@ const schema = new Schema<IVideo, VideoModel>(
     },
     video_like_count: {
       type: [{ type: Schema.Types.ObjectId }],
-      ref: 'User',
       default: []
     },
     video_dislike_count: {
       type: [{ type: Schema.Types.ObjectId }],
-      ref: 'User',
       default: []
     },
     video_views: {
@@ -76,8 +74,10 @@ schema.methods.toJSON = function () {
 
   const resObj = {
     ...obj,
-    video_like_count: obj.video_like_count?.length || 0,
-    video_dislike_count: obj.video_dislike_count?.length || 0
+    video_like_count: obj?.video_like_count ? obj.video_like_count?.length : 0,
+    video_dislike_count: obj?.video_dislike_count
+      ? obj.video_dislike_count?.length
+      : 0
   }
 
   return resObj

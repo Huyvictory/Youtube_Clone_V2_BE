@@ -60,4 +60,18 @@ export const video = (router: Router): void => {
     authGuard.isAuth,
     videoController.deleteVideoById
   )
+
+  router.patch(
+    '/video/like/:videoId',
+    authGuard.isAuth,
+    videoValidation.userLikeUnlikeVideoValidation,
+    videoController.userLikeVideoId
+  )
+
+  router.patch(
+    '/video/unlike/:videoId',
+    authGuard.isAuth,
+    videoValidation.userLikeUnlikeVideoValidation,
+    videoController.userUnlikeVideoId
+  )
 }
