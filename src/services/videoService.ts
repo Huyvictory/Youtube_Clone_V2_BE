@@ -94,5 +94,9 @@ export const videoService = {
       },
       { session }
     )
+  },
+
+  getWatchedVideosOfUser: (ids_watched_videos: Array<string>) => {
+    return VideoSchema.find({ _id: { $in: ids_watched_videos } })
   }
 }

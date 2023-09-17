@@ -504,5 +504,45 @@ export const videoController = {
         status: StatusCodes.INTERNAL_SERVER_ERROR
       })
     }
+  },
+  getListWatchedVideosUser: async (req: Request, res: Response) => {
+    try {
+      const listWatchedVideos = await videoService
+        .getWatchedVideosOfUser(req.body.ids_watched_videos)
+        .populate([
+          {
+            path: 'channel_id',
+            model: 'Channel',
+            select: ['channel_name']
+          }
+        ])
+        .populate({
+          path: 'video_thumbnail_media_id',
+          model: 'Media',
+          select: ['media_url']
+        })
+        .populate({
+          path: 'user_id',
+          model: 'User',
+          select: ['user_avatar_media_id'],
+          populate: {
+            path: 'user_avatar_media_id',
+            model: 'Media',
+            select: ['media_url']
+          }
+        })
+
+      return res.status(StatusCodes.OK).json({
+        data: listWatchedVideos,
+        message: 'Get list of watched videos successfully',
+        status: StatusCodes.OK
+      })
+    } catch (error) {
+      winston.error(error)
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        status: StatusCodes.INTERNAL_SERVER_ERROR
+      })
+    }
   }
 }
