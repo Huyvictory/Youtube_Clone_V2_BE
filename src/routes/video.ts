@@ -75,7 +75,7 @@ export const video = (router: Router): void => {
     videoController.userUnlikeVideoId
   )
 
-  router.get(
+  router.post(
     '/video/watched-videos',
     authGuard.isAuth,
     videoController.getListWatchedVideosUser
